@@ -1,6 +1,115 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import type { Components } from 'react-markdown';
+
+const markdownComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="mb-2 mt-4 text-base font-bold first:mt-0">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mb-2 mt-3 text-sm font-bold first:mt-0">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mb-1.5 mt-3 text-sm font-semibold first:mt-0">{children}</h3>
+  ),
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }) => (
+    <ul className="mb-2 ml-4 list-disc space-y-1 last:mb-0">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-2 ml-4 list-decimal space-y-1 last:mb-0">{children}</ol>
+  ),
+  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  strong: ({ children }) => (
+    <strong className="font-semibold">{children}</strong>
+  ),
+  em: ({ children }) => <em className="italic">{children}</em>,
+  code: ({ children, className }) => {
+    const isBlock = className?.includes('language-');
+    if (isBlock) {
+      return (
+        <code className="block overflow-x-auto rounded-md bg-stone-100 p-3 text-xs dark:bg-zinc-900">
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code className="rounded bg-stone-100 px-1 py-0.5 text-xs dark:bg-zinc-900">
+        {children}
+      </code>
+    );
+  },
+  pre: ({ children }) => <pre className="mb-2 last:mb-0">{children}</pre>,
+  blockquote: ({ children }) => (
+    <blockquote className="mb-2 border-l-2 border-stone-300 pl-3 italic text-stone-600 last:mb-0 dark:border-zinc-600 dark:text-zinc-400">
+      {children}
+    </blockquote>
+  ),
+  hr: () => (
+    <hr className="my-3 border-stone-200 dark:border-zinc-700" />
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline hover:text-blue-700 dark:text-blue-400"
+    >
+      {children}
+    </a>
+  ),
+  table: ({ children }) => (
+    <div className="mb-2 overflow-x-auto last:mb-0">
+      <table className="min-w-full text-xs">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="border-b border-stone-300 px-2 py-1 text-left font-semibold dark:border-zinc-600">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border-b border-stone-200 px-2 py-1 dark:border-zinc-700">
+      {children}
+    </td>
+  ),
+};
+
+// Strip LaTeX math delimiters and convert common LaTeX symbols to Unicode
+function sanitizeLatex(text: string): string {
+  // Remove $...$ wrappers
+  let result = text.replace(/\$([^$]+)\$/g, (_, inner: string) => inner);
+  // Common LaTeX symbols → Unicode
+  result = result.replace(/\\rightarrow/g, '→');
+  result = result.replace(/\\leftarrow/g, '←');
+  result = result.replace(/\\leftrightarrow/g, '↔');
+  result = result.replace(/\\Rightarrow/g, '⇒');
+  result = result.replace(/\\Leftarrow/g, '⇐');
+  result = result.replace(/\\times/g, '×');
+  result = result.replace(/\\div/g, '÷');
+  result = result.replace(/\\neq/g, '≠');
+  result = result.replace(/\\leq/g, '≤');
+  result = result.replace(/\\geq/g, '≥');
+  result = result.replace(/\\approx/g, '≈');
+  result = result.replace(/\\infty/g, '∞');
+  result = result.replace(/\\pm/g, '±');
+  result = result.replace(/\\cdot/g, '·');
+  result = result.replace(/\\ldots/g, '…');
+  result = result.replace(/\\mdash/g, '—');
+  result = result.replace(/\\ndash/g, '–');
+  return result;
+}
+
+const MarkdownMessage = memo(function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {sanitizeLatex(content)}
+    </ReactMarkdown>
+  );
+});
 
 interface Message {
   role: 'user' | 'assistant';
@@ -212,11 +321,20 @@ export default function ChatPanel({
                       : 'border border-stone-200 bg-stone-50 text-stone-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200'
                   }`}
                 >
-                  <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
-                  {msg.role === 'assistant' && msg.content === '' && isStreaming && (
-                    <span className="inline-block animate-pulse text-stone-400 dark:text-zinc-500">
-                      Thinking…
-                    </span>
+                  {msg.role === 'user' ? (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  ) : (
+                    <>
+                      {msg.content ? (
+                        <div className="prose-chat">
+                          <MarkdownMessage content={msg.content} />
+                        </div>
+                      ) : isStreaming ? (
+                        <span className="inline-block animate-pulse text-stone-400 dark:text-zinc-500">
+                          Thinking…
+                        </span>
+                      ) : null}
+                    </>
                   )}
                 </div>
               </div>

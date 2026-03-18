@@ -1,27 +1,4 @@
-import { Ollama } from 'ollama';
+// AI provider abstraction — currently using Gemini, previously Ollama
+// All existing imports of chatWithOllama and ChatMessage continue to work
 
-const ollama = new Ollama({ host: 'http://localhost:11434' });
-
-export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export async function chatWithOllama(
-  messages: ChatMessage[],
-  systemPrompt: string,
-  model: string = 'llama3'
-) {
-  const fullMessages: ChatMessage[] = [
-    { role: 'system', content: systemPrompt },
-    ...messages,
-  ];
-
-  const response = await ollama.chat({
-    model,
-    messages: fullMessages,
-    stream: true,
-  });
-
-  return response; // AsyncGenerator
-}
+export { type ChatMessage, chatWithGemini as chatWithOllama } from './gemini';

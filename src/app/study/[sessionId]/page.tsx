@@ -203,21 +203,22 @@ export default function StudyPage() {
   // ─── Editing ──────────────────────────────────────────────
   if (phase === 'editing' && sessionData && sessionData.currentSample) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <div className="flex flex-1">
+      <div className="flex h-screen flex-col overflow-hidden">
+        <div className="flex flex-1 min-h-0">
           {/* Left: Editor (takes ~60% width) */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-y-auto">
             <WritingEditor
               sessionId={sessionId}
               sample={sessionData.currentSample}
               revisions={sessionData.revisions}
               sampleIndex={sessionData.currentSampleIndex + 1}
               totalSamples={sessionData.totalSamples}
+              group={sessionData.group}
               onSubmitForSurvey={handleSubmitForSurvey}
             />
           </div>
           {/* Right: Chat panel + optional scaffold (~40% width) */}
-          <div className="w-[440px] flex-shrink-0 border-l border-stone-200 dark:border-zinc-800 flex flex-col">
+          <div className="w-[440px] flex-shrink-0 border-l border-stone-200 dark:border-zinc-800 flex flex-col min-h-0">
             {sessionData.group === 'scaffold' && <ScaffoldPanel />}
             <div className="flex-1 min-h-0">
               <ChatPanel

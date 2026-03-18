@@ -83,3 +83,9 @@ vendor/
 coverage/
 .cache/
 tmp/
+
+# bg-shell process state
+.bg-shell/
+
+# sqlite shared memory
+*.db-shm

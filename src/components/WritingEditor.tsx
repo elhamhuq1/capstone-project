@@ -21,6 +21,7 @@ interface WritingEditorProps {
   revisions: RevisionItem[];
   sampleIndex: number;
   totalSamples: number;
+  group: string;
   onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number }) => void;
 }
 
@@ -30,6 +31,7 @@ export default function WritingEditor({
   revisions: initialRevisions,
   sampleIndex,
   totalSamples,
+  group,
   onSubmitForSurvey,
 }: WritingEditorProps) {
   const [text, setText] = useState(sample.content);
@@ -138,7 +140,17 @@ export default function WritingEditor({
               Sample {sampleIndex} of {totalSamples}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Group badge */}
+            <span className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
+              group === 'single-shot'
+                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+                : group === 'scaffold'
+                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+            }`}>
+              {group}
+            </span>
             {/* Progress dots */}
             <div className="flex gap-1.5" aria-label={`Sample ${sampleIndex} of ${totalSamples}`}>
               {Array.from({ length: totalSamples }, (_, i) => (
@@ -176,7 +188,7 @@ export default function WritingEditor({
                   Back to editing
                 </button>
               </div>
-              <div className="flex-1 rounded-xl border border-stone-200 bg-stone-100 p-5 font-mono text-sm leading-relaxed text-stone-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" style={{ minHeight: '400px' }}>
+              <div className="flex-1 rounded-xl border border-stone-200 bg-stone-100 p-5 font-mono text-sm leading-relaxed text-stone-700 whitespace-pre-wrap dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300" style={{ minHeight: '400px' }}>
                 {viewingRevision.content}
               </div>
             </div>
