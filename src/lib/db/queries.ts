@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { eq, and, sql, count, desc, sum } from 'drizzle-orm';
 import { db } from './index';
-import { participants, sessions, writingSamples, revisions, prompts, aiResponses, surveyResponses, sampleTimings } from './schema';
+import { participants, sessions, writingSamples, revisions, prompts, aiResponses, surveyResponses, sampleTimings, finalSubmissions } from './schema';
 
 // ─── Participants ───────────────────────────────────────────────
 
@@ -557,6 +557,9 @@ export async function getSessionDetail(sessionId: string) {
         timeSeconds = Math.round(Math.max(0, (end - start) / 1000));
       }
 
+      // Final submission
+      const finalSub = await getFinalSubmission(sessionId, sampleId);
+
       return {
         sampleId,
         sampleIndex: index,
@@ -575,6 +578,11 @@ export async function getSessionDetail(sessionId: string) {
           completedAt: timing?.completedAt ?? null,
           timeSeconds,
         },
+        finalSubmission: finalSub ? {
+          finalContent: finalSub.finalContent,
+          changes: JSON.parse(finalSub.changesJson),
+          submittedAt: finalSub.submittedAt,
+        } : null,
       };
     }),
   );
@@ -631,6 +639,8 @@ export async function getExportData() {
     survey_cognitive_load: number | null;
     survey_helpfulness: number | null;
     survey_future_intent: number | null;
+    final_content: string | null;
+    changes_summary: string | null;
     session_status: string;
     session_started_at: string;
     session_completed_at: string | null;
@@ -707,6 +717,20 @@ export async function getExportData() {
         surveyMap[s.questionId] = s.rating;
       }
 
+      // Final submission
+      const finalSub = await getFinalSubmission(session.sessionId, sampleId);
+
+      // Summarize changes for CSV
+      let changesSummary: string | null = null;
+      if (finalSub) {
+        try {
+          const changes = JSON.parse(finalSub.changesJson) as Array<{ type: string; text: string }>;
+          const addedWords = changes.filter(c => c.type === 'added').reduce((n, c) => n + c.text.trim().split(/\s+/).length, 0);
+          const removedWords = changes.filter(c => c.type === 'removed').reduce((n, c) => n + c.text.trim().split(/\s+/).length, 0);
+          changesSummary = `+${addedWords} -${removedWords} words`;
+        } catch { changesSummary = null; }
+      }
+
       rows.push({
         participant_name: session.participantName,
         participant_email: session.participantEmail,
@@ -723,6 +747,8 @@ export async function getExportData() {
         survey_cognitive_load: surveyMap['cognitive_load'] ?? null,
         survey_helpfulness: surveyMap['helpfulness'] ?? null,
         survey_future_intent: surveyMap['future_intent'] ?? null,
+        final_content: finalSub?.finalContent ?? null,
+        changes_summary: changesSummary,
         session_status: session.status,
         session_started_at: session.startedAt,
         session_completed_at: session.completedAt,
@@ -731,4 +757,112 @@ export async function getExportData() {
   }
 
   return rows;
+}
+
+// ─── Final Submissions ──────────────────────────────────────────
+
+interface DiffChange {
+  type: 'added' | 'removed' | 'unchanged';
+  text: string;
+}
+
+/**
+ * Compute a word-level diff between original and final text via LCS.
+ * Tokens preserve whitespace so the output can be joined losslessly.
+ */
+function computeDiff(original: string, final: string): DiffChange[] {
+  // Tokenize into words, keeping whitespace attached to the preceding word
+  const tokenize = (text: string): string[] => {
+    const tokens: string[] = [];
+    const re = /\S+\s*/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      tokens.push(m[0]);
+    }
+    return tokens;
+  };
+
+  const origTokens = tokenize(original);
+  const finalTokens = tokenize(final);
+  const m = origTokens.length;
+  const n = finalTokens.length;
+
+  // LCS dp — use Uint16Array rows for speed
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (origTokens[i - 1] === finalTokens[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  // Backtrack
+  const stack: DiffChange[] = [];
+  let i = m;
+  let j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && origTokens[i - 1] === finalTokens[j - 1]) {
+      stack.push({ type: 'unchanged', text: origTokens[i - 1] });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      stack.push({ type: 'added', text: finalTokens[j - 1] });
+      j--;
+    } else {
+      stack.push({ type: 'removed', text: origTokens[i - 1] });
+      i--;
+    }
+  }
+
+  // Reverse and merge consecutive runs of the same type
+  const raw: DiffChange[] = [];
+  while (stack.length > 0) raw.push(stack.pop()!);
+
+  const merged: DiffChange[] = [];
+  for (const c of raw) {
+    const last = merged[merged.length - 1];
+    if (last && last.type === c.type) {
+      last.text += c.text;
+    } else {
+      merged.push({ type: c.type, text: c.text });
+    }
+  }
+
+  return merged;
+}
+
+export async function saveFinalSubmission(
+  sessionId: string,
+  sampleId: number,
+  originalContent: string,
+  finalContent: string,
+) {
+  const changes = computeDiff(originalContent, finalContent);
+
+  const rows = await db
+    .insert(finalSubmissions)
+    .values({
+      sessionId,
+      sampleId,
+      originalContent,
+      finalContent,
+      changesJson: JSON.stringify(changes),
+    })
+    .returning();
+  return rows[0];
+}
+
+export async function getFinalSubmission(sessionId: string, sampleId: number) {
+  const rows = await db
+    .select()
+    .from(finalSubmissions)
+    .where(
+      and(
+        eq(finalSubmissions.sessionId, sessionId),
+        eq(finalSubmissions.sampleId, sampleId),
+      ),
+    );
+  return rows[0] ?? undefined;
 }

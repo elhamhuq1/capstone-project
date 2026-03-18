@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import InstructionsScreen from '@/components/InstructionsScreen';
@@ -11,12 +11,13 @@ import SurveyForm from '@/components/SurveyForm';
 import CompletionScreen from '@/components/CompletionScreen';
 
 // ── Submit button lives in the top bar but needs editor state via callback ──
-function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, onSubmitForSurvey }: {
+function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, onSubmitForSurvey, getCurrentText }: {
   sessionId: string;
   sample: { id: number; content: string };
   sampleIndex: number;
   totalSamples: number;
   onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number }) => void;
+  getCurrentText: () => string;
 }) {
   const [advancing, setAdvancing] = useState(false);
 
@@ -27,12 +28,13 @@ function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, on
     if (!confirmed) return;
     setAdvancing(true);
     try {
-      const revRes = await fetch(`/api/session/${sessionId}/revision`, {
+      const finalContent = getCurrentText();
+      const submitRes = await fetch(`/api/session/${sessionId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: sample.content }),
+        body: JSON.stringify({ finalContent }),
       });
-      if (!revRes.ok) { setAdvancing(false); return; }
+      if (!submitRes.ok) { setAdvancing(false); return; }
 
       fetch(`/api/session/${sessionId}/timing`, {
         method: 'POST',
@@ -99,6 +101,7 @@ interface SessionData {
 export default function StudyPage() {
   const params = useParams<{ sessionId: string }>();
   const sessionId = params.sessionId;
+  const editorTextRef = useRef<string>('');
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
@@ -215,6 +218,7 @@ export default function StudyPage() {
       return;
     }
     setPendingSurvey(null);
+    editorTextRef.current = '';
     await fetchSession();
   }
 
@@ -263,6 +267,11 @@ export default function StudyPage() {
     const totalSamples = sessionData.totalSamples;
     const group = sessionData.group;
 
+    // Initialize ref so submit has access even if user doesn't type
+    if (!editorTextRef.current) {
+      editorTextRef.current = sessionData.currentSample.content;
+    }
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: '#F4F2ED' }}>
         {/* ── Top bar ── */}
@@ -303,6 +312,7 @@ export default function StudyPage() {
             sampleIndex={sampleIndex}
             totalSamples={totalSamples}
             onSubmitForSurvey={handleSubmitForSurvey}
+            getCurrentText={() => editorTextRef.current}
           />
         </div>
 
@@ -318,6 +328,7 @@ export default function StudyPage() {
               totalSamples={totalSamples}
               group={group}
               onSubmitForSurvey={handleSubmitForSurvey}
+              onTextChange={(t) => { editorTextRef.current = t; }}
             />
           </div>
           {/* Right: Chat panel */}
@@ -342,7 +353,7 @@ export default function StudyPage() {
   // ─── Survey ──────────────────────────────────────────────────
   if (phase === 'survey' && pendingSurvey && sessionData) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: '#F4F2ED' }}>
         <SurveyForm
           sessionId={sessionId}
           sampleId={pendingSurvey.sampleId}

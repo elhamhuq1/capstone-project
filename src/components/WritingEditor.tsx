@@ -23,6 +23,7 @@ interface WritingEditorProps {
   totalSamples: number;
   group: string;
   onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number }) => void;
+  onTextChange?: (text: string) => void;
 }
 
 export default function WritingEditor({
@@ -32,6 +33,7 @@ export default function WritingEditor({
   sampleIndex,
   totalSamples,
   onSubmitForSurvey,
+  onTextChange,
 }: WritingEditorProps) {
   const [text, setText] = useState(sample.content);
   const [revisions, setRevisions] = useState<RevisionItem[]>(initialRevisions);
@@ -113,7 +115,6 @@ export default function WritingEditor({
   };
 
   const revisionTabs = [
-    { label: 'Original', content: sample.content, key: 'original' },
     ...revisions.map((r) => ({ label: `Rev. ${r.revisionNumber} — ${formatTimestamp(r.createdAt)}`, content: r.content, key: `rev-${r.revisionNumber}` })),
   ];
 
@@ -166,7 +167,7 @@ export default function WritingEditor({
         ) : (
           <textarea
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => { setText(e.target.value); onTextChange?.(e.target.value); }}
             style={{
               width: '100%',
               height: '100%',
@@ -197,40 +198,48 @@ export default function WritingEditor({
         <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790', letterSpacing: '0.08em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
           Revision History
         </span>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const }}>
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          flex: 1,
+          minWidth: 0,
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#D8D5CF transparent',
+          paddingBottom: '4px',
+        }}>
           {revisionTabs.map((tab) => {
-            const isActive = tab.key === 'original'
-              ? viewingRevision === null && revisions.length === 0
-              : viewingRevision?.revisionNumber === parseInt(tab.key.replace('rev-', ''));
-            const isCurrentEdit = tab.key === `rev-${revisions.length}` || (revisions.length === 0 && tab.key === 'original');
-            const isLast = tab.key === (revisions.length > 0 ? `rev-${revisions.length}` : 'original') && viewingRevision === null;
+            const revNum = parseInt(tab.key.replace('rev-', ''));
+            const isViewing = viewingRevision !== null && viewingRevision.revisionNumber === revNum;
 
             return (
               <button
                 key={tab.key}
                 onClick={() => {
-                  if (tab.key === 'original') {
-                    setViewingRevision({ id: 0, content: sample.content, revisionNumber: 0, createdAt: '' });
-                  } else {
-                    const rev = revisions.find(r => r.revisionNumber === parseInt(tab.key.replace('rev-', '')));
-                    setViewingRevision(rev || null);
+                  if (isViewing) {
+                    setViewingRevision(null);
+                    return;
                   }
+                  const rev = revisions.find(r => r.revisionNumber === revNum);
+                  setViewingRevision(rev || null);
                 }}
                 style={{
                   fontFamily: 'var(--font-inter), sans-serif',
                   fontSize: '16px',
                   padding: '6px 14px',
                   borderRadius: '6px',
-                  border: `1.5px solid ${isLast || isActive ? '#111010' : '#D8D5CF'}`,
-                  backgroundColor: isLast || isActive ? '#111010' : '#F4F2ED',
-                  color: isLast || isActive ? '#F4F2ED' : '#1A1816',
+                  border: `1.5px solid ${isViewing ? '#111010' : '#D8D5CF'}`,
+                  backgroundColor: isViewing ? '#111010' : '#F4F2ED',
+                  color: isViewing ? '#F4F2ED' : '#1A1816',
                   cursor: 'pointer',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap' as const,
                 }}
               >
                 {tab.label}
               </button>
             );
-            void isCurrentEdit;
           })}
         </div>
 

@@ -24,6 +24,8 @@ const CSV_COLUMNS = [
   'survey_cognitive_load',
   'survey_helpfulness',
   'survey_future_intent',
+  'final_content',
+  'changes_summary',
   'session_status',
   'session_started_at',
   'session_completed_at',

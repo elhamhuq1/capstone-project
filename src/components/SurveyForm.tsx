@@ -52,13 +52,12 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
   }
 
   return (
-    <div style={{ display: 'flex', width: '100%', maxWidth: '900px', backgroundColor: '#F4F2ED' }}>
+    <div style={{ display: 'flex', width: '100%', height: '100%', backgroundColor: '#F4F2ED' }}>
       {/* ── Left dark sidebar ── */}
       <div style={{
         width: '320px',
         flexShrink: 0,
         backgroundColor: '#111010',
-        borderRadius: '12px 0 0 12px',
         padding: '48px 40px',
         display: 'flex',
         flexDirection: 'column',
@@ -107,11 +106,11 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
       <div style={{
         flex: 1,
         backgroundColor: '#F4F2ED',
-        borderRadius: '0 12px 12px 0',
         padding: '48px 56px',
         display: 'flex',
         flexDirection: 'column',
         gap: '40px',
+        overflowY: 'auto',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

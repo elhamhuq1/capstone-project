@@ -55,3 +55,14 @@ body {
 
 .prose-chat > *:first-child { margin-top: 0; }
 .prose-chat > *:last-child { margin-bottom: 0; }
+
+/* Typing indicator dots */
+@keyframes typingDot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* Spinner for loading states */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

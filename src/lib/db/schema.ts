@@ -68,3 +68,13 @@ export const sampleTimings = sqliteTable('sample_timings', {
   startedAt: text('started_at').default(sql`(datetime('now'))`).notNull(),
   completedAt: text('completed_at'),
 });
+
+export const finalSubmissions = sqliteTable('final_submissions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  sessionId: text('session_id').notNull(),
+  sampleId: integer('sample_id').notNull(),
+  originalContent: text('original_content').notNull(),
+  finalContent: text('final_content').notNull(),
+  changesJson: text('changes_json').notNull(),
+  submittedAt: text('submitted_at').default(sql`(datetime('now'))`).notNull(),
+});

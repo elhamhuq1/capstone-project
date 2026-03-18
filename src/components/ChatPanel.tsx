@@ -185,6 +185,27 @@ export default function ChatPanel({ sessionId, sampleId, sampleContent: _sampleC
                 </div>
               </div>
             ))}
+            {/* Loading indicator — visible between Send and first streamed chunk */}
+            {isStreaming && (messages.length === 0 || messages[messages.length - 1].role === 'user') && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#A09C96', letterSpacing: '0.05em' }}>
+                  AI
+                </span>
+                <div style={{
+                  padding: '16px 18px',
+                  borderRadius: '12px 12px 12px 2px',
+                  backgroundColor: '#242220',
+                  border: '1px solid #3A3632',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
+                  <span className="typing-dot" style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#706C68', animation: 'typingDot 1.2s infinite ease-in-out', animationDelay: '0s' }} />
+                  <span className="typing-dot" style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#706C68', animation: 'typingDot 1.2s infinite ease-in-out', animationDelay: '0.2s' }} />
+                  <span className="typing-dot" style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#706C68', animation: 'typingDot 1.2s infinite ease-in-out', animationDelay: '0.4s' }} />
+                </div>
+              </div>
+            )}
             {error && (
               <div style={{ padding: '14px 18px', backgroundColor: '#3B1515', border: '1px solid #7F1D1D', borderRadius: '8px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#FCA5A5' }}>
                 {error}

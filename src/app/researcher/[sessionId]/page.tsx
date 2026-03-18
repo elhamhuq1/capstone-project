@@ -20,6 +20,11 @@ interface Revision {
   createdAt: string;
 }
 
+interface DiffChange {
+  type: 'added' | 'removed' | 'unchanged';
+  text: string;
+}
+
 interface SampleDetail {
   sampleId: number;
   sampleIndex: number;
@@ -33,6 +38,11 @@ interface SampleDetail {
     completedAt: string | null;
     timeSeconds: number | null;
   };
+  finalSubmission: {
+    finalContent: string;
+    changes: DiffChange[];
+    submittedAt: string;
+  } | null;
 }
 
 interface SessionDetail {
@@ -319,6 +329,59 @@ export default function SessionDetailPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </Collapsible>
+
+            {/* Final Submission */}
+            <Collapsible title="Final Submission">
+              {!sample.finalSubmission ? (
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#9A9790', fontStyle: 'italic', margin: 0 }}>No final submission recorded.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>
+                    Submitted {fmtDate(sample.finalSubmission.submittedAt)}
+                  </div>
+
+                  {/* Changes summary */}
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {(() => {
+                      const countWords = (chunks: DiffChange[], type: string) =>
+                        chunks.filter(c => c.type === type).reduce((n, c) => n + c.text.trim().split(/\s+/).filter(Boolean).length, 0);
+                      const added = countWords(sample.finalSubmission!.changes, 'added');
+                      const removed = countWords(sample.finalSubmission!.changes, 'removed');
+                      return (
+                        <>
+                          {added > 0 && <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#16A34A', backgroundColor: '#F0FDF4', padding: '4px 10px', borderRadius: '4px' }}>+{added} word{added !== 1 ? 's' : ''} added</span>}
+                          {removed > 0 && <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#DC2626', backgroundColor: '#FEF2F2', padding: '4px 10px', borderRadius: '4px' }}>−{removed} word{removed !== 1 ? 's' : ''} removed</span>}
+                          {added === 0 && removed === 0 && <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#6B6760', backgroundColor: '#F4F2ED', padding: '4px 10px', borderRadius: '4px' }}>No changes</span>}
+                        </>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Inline word-level diff */}
+                  <div style={{ border: '1px solid #EEECE7', borderRadius: '6px', padding: '16px', backgroundColor: '#FAFAF8', fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                    {sample.finalSubmission.changes.map((change, i) => {
+                      if (change.type === 'unchanged') {
+                        return <span key={i}>{change.text}</span>;
+                      }
+                      return (
+                        <span
+                          key={i}
+                          style={{
+                            backgroundColor: change.type === 'added' ? '#DCFCE7' : '#FEE2E2',
+                            color: change.type === 'added' ? '#15803D' : '#B91C1C',
+                            textDecoration: change.type === 'removed' ? 'line-through' : 'none',
+                            borderRadius: '3px',
+                            padding: '1px 3px',
+                          }}
+                        >
+                          {change.text}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </Collapsible>
