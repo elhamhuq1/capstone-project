@@ -11,13 +11,7 @@ interface SurveyFormProps {
   onSurveyComplete: () => void;
 }
 
-export default function SurveyForm({
-  sessionId,
-  sampleId,
-  sampleIndex,
-  totalSamples,
-  onSurveyComplete,
-}: SurveyFormProps) {
+export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamples, onSurveyComplete }: SurveyFormProps) {
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -39,10 +33,7 @@ export default function SurveyForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sampleId,
-          responses: Object.entries(ratings).map(([questionId, rating]) => ({
-            questionId,
-            rating,
-          })),
+          responses: Object.entries(ratings).map(([questionId, rating]) => ({ questionId, rating })),
         }),
       });
 
@@ -61,79 +52,155 @@ export default function SurveyForm({
   }
 
   return (
-    <div className="w-full max-w-2xl rounded-xl border bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-          Sample {sampleIndex} of {totalSamples}
-        </p>
-        <h2 className="mt-2 text-xl font-bold text-stone-900 dark:text-zinc-100">
-          Quick Survey
-        </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-zinc-400">
-          Please rate each statement based on your experience editing this sample.
-        </p>
-      </div>
+    <div style={{ display: 'flex', width: '100%', maxWidth: '900px', backgroundColor: '#F4F2ED' }}>
+      {/* ── Left dark sidebar ── */}
+      <div style={{
+        width: '320px',
+        flexShrink: 0,
+        backgroundColor: '#111010',
+        borderRadius: '12px 0 0 12px',
+        padding: '48px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#F4F2ED', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
+            Research Study
+          </span>
+          <h1 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '42px', fontWeight: 900, color: '#F4F2ED', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
+            Prompt<br />Engineering<br />Study
+          </h1>
+        </div>
 
-      {/* Questions */}
-      <div className="space-y-6">
-        {SURVEY_QUESTIONS.map((q, idx) => (
-          <div
-            key={q.id}
-            className="rounded-lg border border-stone-100 bg-stone-50/50 p-5 dark:border-zinc-800 dark:bg-zinc-800/40"
-          >
-            <p className="mb-3 text-sm font-medium leading-snug text-stone-800 dark:text-zinc-200">
-              <span className="mr-1.5 text-stone-400 dark:text-zinc-500">
-                {idx + 1}.
-              </span>
-              {q.text}
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="mr-1 w-[5.5rem] text-right text-[11px] text-stone-400 dark:text-zinc-500">
-                Strongly Disagree
-              </span>
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => handleRating(q.id, value)}
-                  aria-label={`Rate ${value} for "${q.text}"`}
-                  className={`h-10 w-10 rounded-lg text-sm font-semibold transition-all ${
-                    ratings[q.id] === value
-                      ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300 dark:ring-blue-800'
-                      : 'bg-white text-stone-600 border border-stone-200 hover:border-blue-300 hover:bg-blue-50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700 dark:hover:border-blue-600 dark:hover:bg-zinc-700'
-                  }`}
-                >
-                  {value}
-                </button>
-              ))}
-              <span className="ml-1 w-[5.5rem] text-[11px] text-stone-400 dark:text-zinc-500">
-                Strongly Agree
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Step 1 — done */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #4A4844', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#F4F2ED' }}>1</span>
+            </div>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '20px', fontWeight: 600, color: '#7A7770', textDecoration: 'line-through', textDecorationThickness: '1px' }}>Register</span>
+          </div>
+          {/* Step 2 — active */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#D4C17A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+              <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', fontWeight: 700, color: '#111010' }}>2</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '20px', fontWeight: 700, color: '#F4F2ED', lineHeight: '26px' }}>Writing Tasks</span>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#F4F2ED', lineHeight: 1.4 }}>
+                Sample {sampleIndex} of {totalSamples} complete. Quick survey before continuing.
               </span>
             </div>
           </div>
-        ))}
+          {/* Step 3 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #4A4844', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#F4F2ED' }}>3</span>
+            </div>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '20px', fontWeight: 600, color: '#F4F2ED' }}>Complete</span>
+          </div>
+        </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          {error}
+      {/* ── Right form panel ── */}
+      <div style={{
+        flex: 1,
+        backgroundColor: '#F4F2ED',
+        borderRadius: '0 12px 12px 0',
+        padding: '48px 56px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '40px',
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '16px', color: '#6B6760', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>
+            After Sample {sampleIndex}
+          </span>
+          <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '36px', fontWeight: 800, color: '#1A1816', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
+            Quick check-in
+          </h2>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '19px', fontWeight: 300, color: '#4A4844', lineHeight: 1.5, margin: 0 }}>
+            Rate each statement from 1 (strongly disagree) to 5 (strongly agree).
+          </p>
         </div>
-      )}
 
-      {/* Submit */}
-      <div className="mt-8 text-center">
+        {/* Questions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
+          {SURVEY_QUESTIONS.map((q) => (
+            <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '22px', fontWeight: 600, color: '#1A1816', lineHeight: 1.4, margin: 0 }}>
+                {q.text}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  {[1, 2, 3, 4, 5].map((value) => {
+                    const selected = ratings[q.id] === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => handleRating(q.id, value)}
+                        aria-label={`Rate ${value} for "${q.text}"`}
+                        style={{
+                          width: '60px', height: '60px', borderRadius: '50%',
+                          border: `2px solid ${selected ? '#111010' : '#D8D5CF'}`,
+                          backgroundColor: selected ? '#111010' : '#FFFFFF',
+                          color: selected ? '#F4F2ED' : '#6B6760',
+                          fontFamily: 'var(--font-inter), sans-serif',
+                          fontSize: '22px',
+                          fontWeight: selected ? 700 : 600,
+                          cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 0.1s',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '358px' }}>
+                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790' }}>Strongly disagree</span>
+                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790' }}>Strongly agree</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{ padding: '14px 18px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#B91C1C' }}>
+            {error}
+          </div>
+        )}
+
+        {/* Submit */}
         <button
           onClick={handleSubmit}
           disabled={!allAnswered || submitting}
-          className="rounded-lg bg-blue-600 px-8 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-600"
+          style={{
+            backgroundColor: !allAnswered || submitting ? '#D8D5CF' : '#D4C17A',
+            color: !allAnswered || submitting ? '#9A9790' : '#111010',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '22px',
+            fontFamily: 'var(--font-inter), sans-serif',
+            fontSize: '22px',
+            fontWeight: 700,
+            cursor: !allAnswered || submitting ? 'not-allowed' : 'pointer',
+            transition: 'background-color 0.15s',
+          }}
         >
-          {submitting ? 'Submitting…' : 'Submit Survey'}
+          {submitting ? 'Submitting…' : sampleIndex < totalSamples ? `Continue to Sample ${sampleIndex + 1}` : 'Complete Study'}
         </button>
+
         {!allAnswered && (
-          <p className="mt-2 text-xs text-stone-400 dark:text-zinc-500">
-            Please answer all {SURVEY_QUESTIONS.length} questions to continue.
+          <p style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790', margin: '-28px 0 0', textAlign: 'center' as const }}>
+            Answer all {SURVEY_QUESTIONS.length} questions to continue.
           </p>
         )}
       </div>

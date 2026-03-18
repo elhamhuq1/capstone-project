@@ -1,40 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #F4F2ED;
+  --bg-white: #FFFFFF;
+  --bg-dark: #111010;
+  --bg-dark-2: #1A1816;
+  --bg-dark-3: #2A2420;
+  --bg-dark-4: #242220;
+  --bg-muted: #EEECE7;
+  --bg-faint: #FAFAF8;
+
+  --accent: #D4C17A;
+  --accent-dark: #B8A456;
+
+  --text-primary: #1A1816;
+  --text-secondary: #6B6760;
+  --text-muted: #9A9790;
+  --text-light: #F4F2ED;
+  --text-link: #2558E8;
+
+  --border: #D8D5CF;
+  --border-light: #E4E2DC;
+  --border-dark: #3A3632;
+
+  --font-mono: var(--font-ibm-plex-mono), system-ui, monospace;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 /* Markdown rendering inside chat bubbles */
 .prose-chat {
-  font-size: 0.875rem;
-  line-height: 1.625;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: var(--text-light);
 }
 
-.prose-chat > *:first-child {
-  margin-top: 0;
-}
-
-.prose-chat > *:last-child {
-  margin-bottom: 0;
-}
+.prose-chat > *:first-child { margin-top: 0; }
+.prose-chat > *:last-child { margin-bottom: 0; }

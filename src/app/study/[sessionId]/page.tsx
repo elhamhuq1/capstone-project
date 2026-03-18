@@ -10,6 +10,62 @@ import ScaffoldPanel from '@/components/ScaffoldPanel';
 import SurveyForm from '@/components/SurveyForm';
 import CompletionScreen from '@/components/CompletionScreen';
 
+// ── Submit button lives in the top bar but needs editor state via callback ──
+function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, onSubmitForSurvey }: {
+  sessionId: string;
+  sample: { id: number; content: string };
+  sampleIndex: number;
+  totalSamples: number;
+  onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number }) => void;
+}) {
+  const [advancing, setAdvancing] = useState(false);
+
+  async function handleSubmit() {
+    const confirmed = window.confirm(
+      'Submit this sample? You cannot return to edit it.'
+    );
+    if (!confirmed) return;
+    setAdvancing(true);
+    try {
+      const revRes = await fetch(`/api/session/${sessionId}/revision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: sample.content }),
+      });
+      if (!revRes.ok) { setAdvancing(false); return; }
+
+      fetch(`/api/session/${sessionId}/timing`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sampleId: sample.id, sampleIndex: sampleIndex - 1, event: 'complete' }),
+      }).catch(() => {});
+
+      onSubmitForSurvey({ sampleId: sample.id, sampleIndex });
+    } catch { setAdvancing(false); }
+  }
+
+  return (
+    <button
+      onClick={handleSubmit}
+      disabled={advancing}
+      style={{
+        backgroundColor: advancing ? '#C4B060' : '#D4C17A',
+        color: '#111010',
+        border: 'none',
+        borderRadius: '8px',
+        padding: '12px 28px',
+        fontFamily: 'var(--font-inter), sans-serif',
+        fontSize: '16px',
+        fontWeight: 600,
+        cursor: advancing ? 'not-allowed' : 'pointer',
+        transition: 'background-color 0.15s',
+      }}
+    >
+      {advancing ? 'Submitting…' : sampleIndex === totalSamples ? 'Submit Final Sample' : 'Submit Revision'}
+    </button>
+  );
+}
+
 type Phase = 'loading' | 'instructions' | 'editing' | 'survey' | 'completed' | 'error';
 
 interface CurrentSample {
@@ -162,13 +218,19 @@ export default function StudyPage() {
     await fetchSession();
   }
 
+  const GROUP_LABEL: Record<string, string> = {
+    'single-shot': 'Single-Shot Mode',
+    iterative: 'Iterative Mode',
+    scaffold: 'Scaffold Mode',
+  };
+
   // ─── Loading ────────────────────────────────────────────────
   if (phase === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F2ED' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '3px solid #D8D5CF', borderTopColor: '#1A1816', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <p style={{ marginTop: '16px', fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790', letterSpacing: '0.06em' }}>
             Loading session…
           </p>
         </div>
@@ -179,15 +241,10 @@ export default function StudyPage() {
   // ─── Error ──────────────────────────────────────────────────
   if (phase === 'error') {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-            {errorMessage}
-          </h1>
-          <Link
-            href="/register"
-            className="mt-4 inline-block text-blue-600 underline hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-          >
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F2ED' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '28px', fontWeight: 700, color: '#1A1816' }}>{errorMessage}</h1>
+          <Link href="/register" style={{ marginTop: '16px', display: 'inline-block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '16px', color: '#2558E8' }}>
             Back to Registration
           </Link>
         </div>
@@ -202,31 +259,77 @@ export default function StudyPage() {
 
   // ─── Editing ──────────────────────────────────────────────
   if (phase === 'editing' && sessionData && sessionData.currentSample) {
+    const sampleIndex = sessionData.currentSampleIndex + 1;
+    const totalSamples = sessionData.totalSamples;
+    const group = sessionData.group;
+
     return (
-      <div className="flex h-screen flex-col overflow-hidden">
-        <div className="flex flex-1 min-h-0">
-          {/* Left: Editor (takes ~60% width) */}
-          <div className="flex-1 min-w-0 overflow-y-auto">
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: '#F4F2ED' }}>
+        {/* ── Top bar ── */}
+        <div style={{
+          backgroundColor: '#111010',
+          height: '72px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 52px',
+        }}>
+          {/* Left: sample counter + group badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '26px', fontWeight: 800, color: '#F4F2ED', letterSpacing: '-0.02em' }}>
+              Sample {sampleIndex} of {totalSamples}
+            </span>
+            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#F4F2ED', backgroundColor: '#2A2824', borderRadius: '6px', padding: '8px 16px' }}>
+              {GROUP_LABEL[group] ?? group}
+            </span>
+          </div>
+
+          {/* Center: progress dots */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {Array.from({ length: totalSamples }, (_, i) => (
+              <div key={i} style={{
+                width: '32px', height: '6px', borderRadius: '3px',
+                backgroundColor: i < sampleIndex - 1 ? '#D4C17A' : i === sampleIndex - 1 ? '#D4C17A' : '#3A3836',
+                opacity: i < sampleIndex ? 1 : 0.4,
+              }} />
+            ))}
+          </div>
+
+          {/* Right: submit button */}
+          <SubmitRevisionButton
+            sessionId={sessionId}
+            sample={sessionData.currentSample}
+            sampleIndex={sampleIndex}
+            totalSamples={totalSamples}
+            onSubmitForSurvey={handleSubmitForSurvey}
+          />
+        </div>
+
+        {/* ── Split view ── */}
+        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+          {/* Left: Editor */}
+          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', borderRight: '2px solid #E4E2DC' }}>
             <WritingEditor
               sessionId={sessionId}
               sample={sessionData.currentSample}
               revisions={sessionData.revisions}
-              sampleIndex={sessionData.currentSampleIndex + 1}
-              totalSamples={sessionData.totalSamples}
-              group={sessionData.group}
+              sampleIndex={sampleIndex}
+              totalSamples={totalSamples}
+              group={group}
               onSubmitForSurvey={handleSubmitForSurvey}
             />
           </div>
-          {/* Right: Chat panel + optional scaffold (~40% width) */}
-          <div className="w-[440px] flex-shrink-0 border-l border-stone-200 dark:border-zinc-800 flex flex-col min-h-0">
-            {sessionData.group === 'scaffold' && <ScaffoldPanel />}
-            <div className="flex-1 min-h-0">
+          {/* Right: Chat panel */}
+          <div style={{ width: '480px', flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {group === 'scaffold' && <ScaffoldPanel />}
+            <div style={{ flex: 1, minHeight: 0 }}>
               <ChatPanel
                 key={sessionData.currentSample.id}
                 sessionId={sessionId}
                 sampleId={sessionData.currentSample.id}
                 sampleContent={sessionData.currentSample.content}
-                group={sessionData.group}
+                group={group}
                 initialMessages={sessionData.messages || []}
               />
             </div>
@@ -239,7 +342,7 @@ export default function StudyPage() {
   // ─── Survey ──────────────────────────────────────────────────
   if (phase === 'survey' && pendingSurvey && sessionData) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-stone-50 p-6 dark:bg-zinc-950">
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED', alignItems: 'center', justifyContent: 'center', padding: '40px' }}>
         <SurveyForm
           sessionId={sessionId}
           sampleId={pendingSurvey.sampleId}

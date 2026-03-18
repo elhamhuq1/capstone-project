@@ -17,39 +17,32 @@ interface Session {
 }
 
 const GROUP_FILTERS = [
-  { label: 'All', value: '' },
+  { label: 'All Groups', value: '' },
   { label: 'Single-Shot', value: 'single-shot' },
   { label: 'Iterative', value: 'iterative' },
   { label: 'Scaffold', value: 'scaffold' },
 ] as const;
 
-const GROUP_COLORS: Record<string, string> = {
-  'single-shot':
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  iterative:
-    'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
-  scaffold:
-    'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  active:
-    'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  completed:
-    'bg-stone-100 text-stone-700 dark:bg-zinc-700/40 dark:text-zinc-300',
-  abandoned:
-    'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+const GROUP_BADGE: Record<string, { bg: string; color: string }> = {
+  scaffold:     { bg: '#D4C17A', color: '#111010' },
+  iterative:    { bg: '#1A1816', color: '#F4F2ED' },
+  'single-shot':{ bg: '#4A4844', color: '#F4F2ED' },
 };
 
 function formatDate(iso: string) {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
   });
+}
+
+function avgSurvey(sessions: Session[]) {
+  const completed = sessions.filter(s => s.samplesCompleted === 3);
+  if (completed.length === 0) return '—';
+  // totalTimeSeconds is available; avg survey score isn't exposed in this endpoint
+  // show session completion rate instead
+  return `${Math.round((completed.length / sessions.length) * 100)}%`;
 }
 
 export default function ResearcherPage() {
@@ -57,21 +50,19 @@ export default function ResearcherPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
+  const [search, setSearch] = useState('');
 
   const fetchSessions = useCallback(async (group: string) => {
     setLoading(true);
     setError('');
     try {
-      const url = group
-        ? `/api/researcher/sessions?group=${group}`
-        : '/api/researcher/sessions';
+      const url = group ? `/api/researcher/sessions?group=${group}` : '/api/researcher/sessions';
       const res = await fetch(url);
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || `HTTP ${res.status}`);
       }
-      const data: Session[] = await res.json();
-      setSessions(data);
+      setSessions(await res.json());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load sessions');
     } finally {
@@ -79,150 +70,241 @@ export default function ResearcherPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchSessions(activeFilter);
-  }, [activeFilter, fetchSessions]);
+  useEffect(() => { fetchSessions(activeFilter); }, [activeFilter, fetchSessions]);
 
-  function handleFilter(value: string) {
-    setActiveFilter(value);
-  }
+  const filtered = search.trim()
+    ? sessions.filter(s =>
+        s.participantName.toLowerCase().includes(search.toLowerCase()) ||
+        s.participantEmail.toLowerCase().includes(search.toLowerCase())
+      )
+    : sessions;
+
+  const counts = {
+    total: sessions.length,
+    'single-shot': sessions.filter(s => s.group === 'single-shot').length,
+    iterative:     sessions.filter(s => s.group === 'iterative').length,
+    scaffold:      sessions.filter(s => s.group === 'scaffold').length,
+    samplesTotal:  sessions.reduce((acc, s) => acc + s.samplesCompleted, 0),
+  };
+
+  const mono = (extra?: React.CSSProperties): React.CSSProperties => ({
+    fontFamily: 'var(--font-ibm-plex-mono), monospace',
+    ...extra,
+  });
+  const sans = (extra?: React.CSSProperties): React.CSSProperties => ({
+    fontFamily: 'var(--font-inter), sans-serif',
+    ...extra,
+  });
 
   return (
-    <div>
-      {/* Filter bar */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-zinc-500">
-          Group
-        </span>
-        {GROUP_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => handleFilter(f.value)}
-            className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all ${
-              activeFilter === f.value
-                ? 'bg-stone-900 text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900'
-                : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400 hover:text-stone-900 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:text-zinc-200 dark:hover:border-zinc-500'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+
+      {/* ━━ Stats bar — full bleed white strip ━━ */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        borderBottom: '2px solid #E4E2DC',
+        display: 'flex',
+        alignItems: 'stretch',
+        gap: '0',
+        padding: '24px 60px',
+        margin: '0 -60px',   /* bleed past main padding */
+      }}>
+        {([
+          { value: counts.total,            label: 'Participants' },
+          'divider',
+          { value: counts['single-shot'],   label: 'Single-Shot' },
+          { value: counts.iterative,        label: 'Iterative' },
+          { value: counts.scaffold,         label: 'Scaffold' },
+          'divider',
+          { value: counts.samplesTotal,     label: 'Samples Collected' },
+          { value: avgSurvey(sessions),     label: 'Completion Rate' },
+        ] as Array<{ value: string | number; label: string } | 'divider'>).map((item, i) => {
+          if (item === 'divider') {
+            return <div key={i} style={{ width: '2px', backgroundColor: '#E4E2DC', margin: '0 40px', alignSelf: 'stretch', flexShrink: 0 }} />;
+          }
+          return (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginRight: '48px' }}>
+              <span style={sans({ fontSize: '36px', fontWeight: 800, color: '#1A1816', lineHeight: '1', letterSpacing: '-0.02em' })}>
+                {item.value}
+              </span>
+              <span style={mono({ fontSize: '11px', color: '#9A9790', letterSpacing: '0.08em', textTransform: 'uppercase' })}>
+                {item.label}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Loading state */}
+      {/* ━━ Toolbar: search + filter chips ━━ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '24px 0 20px' }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: 1, maxWidth: '360px' }}>
+          <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="7" cy="7" r="5" stroke="#9A9790" strokeWidth="1.5" />
+            <path d="M11 11L14 14" stroke="#9A9790" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name or email…"
+            style={sans({
+              width: '100%',
+              padding: '11px 16px 11px 38px',
+              backgroundColor: '#FFFFFF',
+              border: '2px solid #D8D5CF',
+              borderRadius: '8px',
+              fontSize: '15px',
+              color: '#1A1816',
+              outline: 'none',
+            })}
+            onFocus={e => e.currentTarget.style.borderColor = '#1A1816'}
+            onBlur={e => e.currentTarget.style.borderColor = '#D8D5CF'}
+          />
+        </div>
+
+        {/* Group filter chips */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {GROUP_FILTERS.map(f => {
+            const active = activeFilter === f.value;
+            return (
+              <button key={f.value} onClick={() => setActiveFilter(f.value)} style={sans({
+                padding: '10px 18px',
+                borderRadius: '8px',
+                border: `2px solid ${active ? '#111010' : '#D8D5CF'}`,
+                backgroundColor: active ? '#111010' : '#FFFFFF',
+                color: active ? '#F4F2ED' : '#1A1816',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.1s',
+                whiteSpace: 'nowrap',
+              })}>
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ━━ Loading ━━ */}
       {loading && (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-stone-300 border-t-stone-800 dark:border-zinc-600 dark:border-t-zinc-200" />
-          <span className="ml-3 text-sm text-stone-500 dark:text-zinc-400">
-            Loading sessions…
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+          <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: '2px solid #D8D5CF', borderTopColor: '#1A1816', animation: 'spin 0.8s linear infinite' }} />
+          <span style={mono({ marginLeft: '12px', fontSize: '13px', color: '#9A9790' })}>Loading sessions…</span>
         </div>
       )}
 
-      {/* Error state */}
+      {/* ━━ Error ━━ */}
       {error && !loading && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-          <strong>Error:</strong> {error}
+        <div style={{ padding: '18px 22px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', ...sans({ fontSize: '15px', color: '#B91C1C' }) }}>
+          {error}
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && !error && sessions.length === 0 && (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-sm text-stone-500 dark:text-zinc-400">
-            No sessions found
-            {activeFilter && (
-              <span>
-                {' '}for group <strong>{activeFilter}</strong>
-              </span>
-            )}
-            .
+      {/* ━━ Empty ━━ */}
+      {!loading && !error && filtered.length === 0 && (
+        <div style={{ padding: '64px 0', textAlign: 'center', border: '2px dashed #D8D5CF', borderRadius: '12px' }}>
+          <p style={sans({ fontSize: '17px', color: '#9A9790', margin: 0 })}>
+            {search ? `No results for "${search}"` : activeFilter ? `No ${activeFilter} sessions yet.` : 'No sessions yet.'}
           </p>
         </div>
       )}
 
-      {/* Session table */}
-      {!loading && !error && sessions.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 bg-stone-50 dark:border-zinc-800 dark:bg-zinc-800/60">
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
-                    Participant
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
-                    Email
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
-                    Group
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
-                    Status
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
-                    Samples
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-zinc-400">
-                    Started
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sessions.map((s, idx) => (
-                  <tr
-                    key={s.sessionId}
-                    className={`border-b border-stone-100 transition-colors hover:bg-stone-50 dark:border-zinc-800/50 dark:hover:bg-zinc-800/40 ${
-                      idx % 2 === 1
-                        ? 'bg-stone-50/50 dark:bg-zinc-800/20'
-                        : ''
-                    }`}
-                  >
-                    <td className="px-5 py-3.5">
-                      <Link
-                        href={`/researcher/${s.sessionId}`}
-                        className="font-medium text-stone-900 underline-offset-2 hover:underline dark:text-zinc-100"
-                      >
-                        {s.participantName}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3.5 text-stone-500 dark:text-zinc-400">
-                      {s.participantEmail}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          GROUP_COLORS[s.group] ??
-                          'bg-stone-100 text-stone-600 dark:bg-zinc-700 dark:text-zinc-300'
-                        }`}
-                      >
-                        {s.group}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          STATUS_COLORS[s.status] ??
-                          'bg-stone-100 text-stone-600 dark:bg-zinc-700 dark:text-zinc-300'
-                        }`}
-                      >
-                        {s.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 font-mono text-xs text-stone-600 dark:text-zinc-400">
-                      {s.samplesCompleted}/3
-                    </td>
-                    <td className="px-5 py-3.5 text-stone-500 dark:text-zinc-400">
-                      {formatDate(s.startedAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* ━━ Table ━━ */}
+      {!loading && !error && filtered.length > 0 && (
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '2px solid #E4E2DC', overflow: 'hidden' }}>
+          {/* Header */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '200px 1fr 160px 100px 100px 1fr 100px',
+            borderBottom: '2px solid #1A1816',
+            padding: '14px 24px',
+          }}>
+            {['Name', 'Email', 'Group', 'Samples', 'Prompts', 'Started', 'Actions'].map((h, i) => (
+              <span key={h} style={mono({
+                fontSize: '12px', fontWeight: 700, color: '#1A1816',
+                letterSpacing: '0.07em', textTransform: 'uppercase',
+                textAlign: i === 6 ? 'right' : 'left',
+              })}>
+                {h}
+              </span>
+            ))}
           </div>
-          {/* Summary row */}
-          <div className="border-t border-stone-200 bg-stone-50 px-5 py-2.5 text-xs text-stone-500 dark:border-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-500">
-            {sessions.length} session{sessions.length !== 1 && 's'} total
+
+          {/* Rows */}
+          {filtered.map((s, idx) => {
+            const badge = GROUP_BADGE[s.group] ?? { bg: '#4A4844', color: '#F4F2ED' };
+            const isComplete = s.samplesCompleted === 3;
+            return (
+              <div
+                key={s.sessionId}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '200px 1fr 160px 100px 100px 1fr 100px',
+                  alignItems: 'center',
+                  padding: '18px 24px',
+                  borderBottom: idx < filtered.length - 1 ? '1px solid #EEECE7' : 'none',
+                  backgroundColor: idx % 2 === 1 ? '#FAFAF8' : '#FFFFFF',
+                  transition: 'background-color 0.1s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#F4F2ED')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 1 ? '#FAFAF8' : '#FFFFFF')}
+              >
+                <span style={sans({ fontSize: '16px', fontWeight: 600, color: '#1A1816' })}>
+                  {s.participantName}
+                </span>
+                <span style={sans({ fontSize: '15px', color: '#6B6760' })}>
+                  {s.participantEmail}
+                </span>
+                <div>
+                  <span style={mono({
+                    fontSize: '12px',
+                    backgroundColor: badge.bg, color: badge.color,
+                    borderRadius: '4px', padding: '4px 10px',
+                    display: 'inline-block',
+                  })}>
+                    {s.group}
+                  </span>
+                </div>
+                <span style={sans({ fontSize: '16px', color: isComplete ? '#1A1816' : '#9A9790', fontWeight: isComplete ? 600 : 400 })}>
+                  {s.samplesCompleted} / 3
+                </span>
+                <span style={sans({ fontSize: '16px', color: '#1A1816' })}>
+                  {s.totalPrompts}
+                </span>
+                <span style={sans({ fontSize: '14px', color: '#6B6760' })}>
+                  {formatDate(s.startedAt)}
+                </span>
+                <div style={{ textAlign: 'right' }}>
+                  <Link href={`/researcher/${s.sessionId}`} style={sans({
+                    fontSize: '14px', fontWeight: 600, color: '#2558E8', textDecoration: 'none',
+                  })}>
+                    View →
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Footer */}
+          <div style={{
+            borderTop: '1px solid #E4E2DC',
+            padding: '12px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span style={mono({ fontSize: '12px', color: '#9A9790', letterSpacing: '0.04em' })}>
+              {filtered.length} session{filtered.length !== 1 && 's'}
+              {search && ` matching "${search}"`}
+            </span>
+            <a href="/api/researcher/export" download style={mono({
+              fontSize: '12px', color: '#6B6760', textDecoration: 'none', letterSpacing: '0.04em',
+            })}>
+              Download CSV ↓
+            </a>
           </div>
         </div>
       )}

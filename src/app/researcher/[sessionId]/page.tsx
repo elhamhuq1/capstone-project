@@ -47,22 +47,16 @@ interface SessionDetail {
 }
 
 /* ---------- palette ---------- */
-const GROUP_BADGE: Record<string, string> = {
-  'single-shot':
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  iterative:
-    'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
-  scaffold:
-    'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+const GROUP_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
+  scaffold:      { bg: '#D4C17A', color: '#111010' },
+  iterative:     { bg: '#1A1816', color: '#F4F2ED' },
+  'single-shot': { bg: '#4A4844', color: '#F4F2ED' },
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  active:
-    'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  completed:
-    'bg-stone-100 text-stone-700 dark:bg-zinc-700/40 dark:text-zinc-300',
-  abandoned:
-    'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
+  'in-progress': { bg: '#EEECE7', color: '#6B6760' },
+  completed:     { bg: '#D4C17A', color: '#111010' },
+  abandoned:     { bg: '#FEE2E2', color: '#B91C1C' },
 };
 
 const SURVEY_LABELS: Record<string, string> = {
@@ -93,49 +87,34 @@ function fmtDuration(sec: number | null) {
 }
 
 /* ---------- collapsible ---------- */
-function Collapsible({
-  title,
-  count,
-  children,
-  defaultOpen = false,
-}: {
-  title: string;
-  count?: number;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
+function Collapsible({ title, count, children, defaultOpen = false }: {
+  title: string; count?: number; children: React.ReactNode; defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-lg border border-stone-200 dark:border-zinc-700">
+    <div style={{ border: '1.5px solid #E4E2DC', borderRadius: '8px', overflow: 'hidden' }}>
       <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 18px', background: open ? '#FAFAF8' : '#FFFFFF', border: 'none', cursor: 'pointer',
+          fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', fontWeight: 500, color: '#1A1816',
+          textAlign: 'left',
+        }}
       >
-        <span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {title}
           {count !== undefined && (
-            <span className="ml-1.5 text-stone-400 dark:text-zinc-500">
-              ({count})
-            </span>
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>({count})</span>
           )}
         </span>
-        <svg
-          className={`h-4 w-4 text-stone-400 transition-transform dark:text-zinc-500 ${
-            open ? 'rotate-180' : ''
-          }`}
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="6 9 12 15 18 9" />
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}>
+          <path d="M4 6L8 10L12 6" stroke="#9A9790" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {open && (
-        <div className="border-t border-stone-200 px-4 py-3 dark:border-zinc-700">
+        <div style={{ borderTop: '1px solid #E4E2DC', padding: '16px 18px', backgroundColor: '#FFFFFF' }}>
           {children}
         </div>
       )}
@@ -144,24 +123,16 @@ function Collapsible({
 }
 
 /* ---------- truncated text ---------- */
-function TruncatedText({
-  text,
-  maxLen = 300,
-}: {
-  text: string;
-  maxLen?: number;
-}) {
+function TruncatedText({ text, maxLen = 300 }: { text: string; maxLen?: number }) {
   const [expanded, setExpanded] = useState(false);
-  if (text.length <= maxLen) {
-    return <span className="whitespace-pre-wrap">{text}</span>;
-  }
+  if (text.length <= maxLen) return <span style={{ whiteSpace: 'pre-wrap' }}>{text}</span>;
   return (
-    <span className="whitespace-pre-wrap">
+    <span style={{ whiteSpace: 'pre-wrap' }}>
       {expanded ? text : text.slice(0, maxLen) + '…'}
-      <button
-        onClick={() => setExpanded((e) => !e)}
-        className="ml-1 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-      >
+      <button onClick={() => setExpanded(e => !e)} style={{
+        marginLeft: '6px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '13px',
+        fontWeight: 600, color: '#2558E8', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+      }}>
         {expanded ? 'Show less' : 'Show more'}
       </button>
     </span>
@@ -209,11 +180,9 @@ export default function SessionDetailPage() {
   /* -- loading -- */
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-stone-300 border-t-stone-800 dark:border-zinc-600 dark:border-t-zinc-200" />
-        <span className="ml-3 text-sm text-stone-500 dark:text-zinc-400">
-          Loading session…
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
+        <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: '2px solid #D8D5CF', borderTopColor: '#1A1816', animation: 'spin 0.8s linear infinite' }} />
+        <span style={{ marginLeft: '12px', fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790' }}>Loading session…</span>
       </div>
     );
   }
@@ -221,20 +190,10 @@ export default function SessionDetailPage() {
   /* -- 404 -- */
   if (notFound) {
     return (
-      <div className="rounded-xl border border-dashed border-stone-300 bg-white px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900">
-        <p className="text-lg font-semibold text-stone-700 dark:text-zinc-300">
-          Session not found
-        </p>
-        <p className="mt-1 text-sm text-stone-500 dark:text-zinc-400">
-          The session <code className="font-mono text-xs">{sessionId}</code>{' '}
-          does not exist.
-        </p>
-        <Link
-          href="/researcher"
-          className="mt-4 inline-block text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-        >
-          ← Back to sessions
-        </Link>
+      <div style={{ padding: '64px', textAlign: 'center', border: '2px dashed #D8D5CF', borderRadius: '12px' }}>
+        <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '18px', fontWeight: 600, color: '#1A1816', margin: '0 0 8px' }}>Session not found</p>
+        <p style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790', margin: '0 0 20px' }}>{sessionId}</p>
+        <Link href="/researcher" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#2558E8', textDecoration: 'none' }}>← Back to sessions</Link>
       </div>
     );
   }
@@ -242,196 +201,149 @@ export default function SessionDetailPage() {
   /* -- error -- */
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-5 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
-        <strong>Error:</strong> {error}
+      <div style={{ padding: '18px 22px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#B91C1C' }}>
+        {error}
       </div>
     );
   }
 
   if (!detail) return null;
 
-  const { participant, group, status, startedAt, completedAt, samples } =
-    detail;
+  const { participant, group, status, startedAt, completedAt, samples } = detail;
+  const groupBadge = GROUP_BADGE_STYLE[group] ?? { bg: '#4A4844', color: '#F4F2ED' };
+  const statusBadge = STATUS_BADGE_STYLE[status] ?? { bg: '#EEECE7', color: '#6B6760' };
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Back link */}
-      <Link
-        href="/researcher"
-        className="mb-6 inline-block text-sm font-medium text-stone-400 transition-colors hover:text-stone-700 dark:text-zinc-500 dark:hover:text-zinc-300"
-      >
+      <Link href="/researcher" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#6B6760', textDecoration: 'none' }}>
         ← All sessions
       </Link>
 
-      {/* Header card */}
-      <div className="mb-8 rounded-xl border border-stone-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      {/* ── Participant header card ── */}
+      <div style={{ backgroundColor: '#FFFFFF', border: '2px solid #E4E2DC', borderRadius: '12px', padding: '28px 32px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
           <div>
-            <h2 className="text-xl font-bold text-stone-900 dark:text-zinc-100">
+            <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '24px', fontWeight: 700, color: '#1A1816', margin: '0 0 4px' }}>
               {participant.name ?? 'Unknown'}
             </h2>
-            <p className="mt-0.5 text-sm text-stone-500 dark:text-zinc-400">
+            <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '16px', color: '#6B6760', margin: 0 }}>
               {participant.email ?? '—'}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                GROUP_BADGE[group] ??
-                'bg-stone-100 text-stone-600 dark:bg-zinc-700 dark:text-zinc-300'
-              }`}
-            >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', backgroundColor: groupBadge.bg, color: groupBadge.color, borderRadius: '4px', padding: '5px 12px' }}>
               {group}
             </span>
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                STATUS_BADGE[status] ??
-                'bg-stone-100 text-stone-600 dark:bg-zinc-700 dark:text-zinc-300'
-              }`}
-            >
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', backgroundColor: statusBadge.bg, color: statusBadge.color, borderRadius: '4px', padding: '5px 12px' }}>
               {status}
             </span>
           </div>
         </div>
-
-        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1 text-xs text-stone-500 dark:text-zinc-400">
-          <span>
-            <strong className="text-stone-600 dark:text-zinc-300">
-              Started:
-            </strong>{' '}
-            {fmtDate(startedAt)}
+        <div style={{ marginTop: '20px', display: 'flex', gap: '40px' }}>
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#6B6760' }}>
+            <strong style={{ color: '#1A1816', fontWeight: 600 }}>Started:</strong> {fmtDate(startedAt)}
           </span>
-          <span>
-            <strong className="text-stone-600 dark:text-zinc-300">
-              Completed:
-            </strong>{' '}
-            {fmtDate(completedAt)}
+          <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#6B6760' }}>
+            <strong style={{ color: '#1A1816', fontWeight: 600 }}>Completed:</strong> {fmtDate(completedAt)}
           </span>
         </div>
       </div>
 
-      {/* Per-sample cards */}
-      <div className="space-y-6">
-        {samples.map((sample, idx) => (
-          <div
-            key={sample.sampleId}
-            className="rounded-xl border border-stone-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-          >
-            {/* Sample header */}
-            <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4 dark:border-zinc-800">
-              <div>
-                <h3 className="text-sm font-bold text-stone-800 dark:text-zinc-200">
-                  Sample {idx + 1}
-                  {sample.title && (
-                    <span className="ml-2 font-normal text-stone-500 dark:text-zinc-400">
-                      — {sample.title}
-                    </span>
-                  )}
-                </h3>
-              </div>
-              <span className="rounded-md bg-stone-100 px-2.5 py-1 text-xs font-mono text-stone-600 dark:bg-zinc-800 dark:text-zinc-400">
-                {fmtDuration(sample.timing.timeSeconds)}
+      {/* ── Per-sample cards ── */}
+      {samples.map((sample, idx) => (
+        <div key={sample.sampleId} style={{ backgroundColor: '#FFFFFF', border: '2px solid #E4E2DC', borderRadius: '12px', overflow: 'hidden' }}>
+          {/* Sample header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #EEECE7', padding: '20px 24px' }}>
+            <div>
+              <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '18px', fontWeight: 700, color: '#1A1816' }}>
+                Sample {idx + 1}
               </span>
+              {sample.title && (
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '16px', color: '#6B6760', marginLeft: '10px' }}>
+                  — {sample.title}
+                </span>
+              )}
             </div>
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', backgroundColor: '#F4F2ED', border: '1px solid #D8D5CF', borderRadius: '6px', padding: '5px 12px', color: '#6B6760' }}>
+              {fmtDuration(sample.timing.timeSeconds)}
+            </span>
+          </div>
 
-            {/* Collapsible sections */}
-            <div className="space-y-3 p-4">
-              {/* Prompts & AI Responses */}
-              <Collapsible
-                title="Prompts & AI Responses"
-                count={sample.prompts.length}
-                defaultOpen={idx === 0}
-              >
-                {sample.prompts.length === 0 ? (
-                  <p className="text-xs italic text-stone-400 dark:text-zinc-500">
-                    No prompts recorded.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {sample.prompts.map((p) => (
-                      <div key={p.id}>
-                        <div className="text-xs font-semibold text-stone-500 dark:text-zinc-400">
-                          Prompt #{p.promptNumber}
-                        </div>
-                        <div className="mt-1 rounded-md bg-blue-50 px-3 py-2 text-sm text-stone-800 dark:bg-blue-900/20 dark:text-zinc-200">
-                          <TruncatedText text={p.content} />
-                        </div>
-                        {p.aiResponse && (
-                          <div className="mt-1.5 ml-3 rounded-md border-l-2 border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-stone-700 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-zinc-300">
-                            <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                              AI Response
-                            </span>
+          {/* Collapsible sections */}
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {/* Prompts & AI Responses */}
+            <Collapsible title="Prompts & AI Responses" count={sample.prompts.length} defaultOpen={idx === 0}>
+              {sample.prompts.length === 0 ? (
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#9A9790', fontStyle: 'italic', margin: 0 }}>No prompts recorded.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {sample.prompts.map((p) => (
+                    <div key={p.id}>
+                      <div style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790', marginBottom: '8px', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+                        Prompt #{p.promptNumber}
+                      </div>
+                      <div style={{ backgroundColor: '#2E2B28', borderRadius: '8px', padding: '14px 16px', fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#F4F2ED', lineHeight: 1.6 }}>
+                        <TruncatedText text={p.content} />
+                      </div>
+                      {p.aiResponse && (
+                        <div style={{ marginTop: '8px', marginLeft: '16px', backgroundColor: '#F4F2ED', borderLeft: '3px solid #D4C17A', borderRadius: '0 8px 8px 0', padding: '14px 16px' }}>
+                          <div style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '11px', color: '#D4C17A', letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
+                            AI Response
+                          </div>
+                          <div style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#1A1816', lineHeight: 1.6 }}>
                             <TruncatedText text={p.aiResponse} maxLen={500} />
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Collapsible>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Collapsible>
 
-              {/* Revisions */}
-              <Collapsible
-                title="Revisions"
-                count={sample.revisions.length}
-              >
-                {sample.revisions.length === 0 ? (
-                  <p className="text-xs italic text-stone-400 dark:text-zinc-500">
-                    No revisions recorded.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {sample.revisions.map((r) => (
-                      <div
-                        key={r.id}
-                        className="rounded-md border border-stone-100 bg-stone-50/50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800/40"
-                      >
-                        <div className="mb-1 flex items-center justify-between text-xs text-stone-400 dark:text-zinc-500">
-                          <span className="font-semibold">
-                            Rev #{r.revisionNumber}
-                          </span>
-                          <span>{fmtDate(r.createdAt)}</span>
-                        </div>
-                        <div className="text-sm text-stone-700 dark:text-zinc-300">
-                          <TruncatedText text={r.content} />
-                        </div>
+            {/* Revisions */}
+            <Collapsible title="Revisions" count={sample.revisions.length}>
+              {sample.revisions.length === 0 ? (
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#9A9790', fontStyle: 'italic', margin: 0 }}>No revisions recorded.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {sample.revisions.map((r) => (
+                    <div key={r.id} style={{ border: '1px solid #EEECE7', borderRadius: '6px', padding: '14px 16px', backgroundColor: '#FAFAF8' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', fontWeight: 700, color: '#6B6760', letterSpacing: '0.06em' }}>Rev #{r.revisionNumber}</span>
+                        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>{fmtDate(r.createdAt)}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </Collapsible>
+                      <div style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#1A1816', lineHeight: 1.6 }}>
+                        <TruncatedText text={r.content} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Collapsible>
 
-              {/* Survey Ratings */}
-              <Collapsible title="Survey Ratings">
-                {Object.keys(sample.survey).length === 0 ? (
-                  <p className="text-xs italic text-stone-400 dark:text-zinc-500">
-                    No survey responses.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(SURVEY_LABELS).map(([key, label]) => {
-                      const val = sample.survey[key];
-                      return (
-                        <div
-                          key={key}
-                          className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 py-1.5 dark:border-zinc-700 dark:bg-zinc-800"
-                        >
-                          <span className="text-xs text-stone-500 dark:text-zinc-400">
-                            {label}
-                          </span>
-                          <span className="rounded-md bg-stone-100 px-1.5 py-0.5 text-xs font-bold text-stone-700 dark:bg-zinc-700 dark:text-zinc-200">
-                            {val !== undefined ? val : '—'}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </Collapsible>
-            </div>
+            {/* Survey Ratings */}
+            <Collapsible title="Survey Ratings">
+              {Object.keys(sample.survey).length === 0 ? (
+                <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#9A9790', fontStyle: 'italic', margin: 0 }}>No survey responses.</p>
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {Object.entries(SURVEY_LABELS).map(([key, label]) => {
+                    const val = sample.survey[key];
+                    return (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#F4F2ED', border: '1.5px solid #D8D5CF', borderRadius: '8px', padding: '10px 16px' }}>
+                        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#6B6760' }}>{label}</span>
+                        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '20px', fontWeight: 800, color: '#1A1816' }}>{val !== undefined ? val : '—'}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Collapsible>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
