@@ -50,19 +50,19 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Project Foundation + Ollama AI Proof** `risk:high` `depends:[]`
+- [x] **S01: Project Foundation + Ollama AI Proof** `risk:high` `depends:[]`
   > After this: API endpoint accepts a prompt with writing sample context and returns advisory suggestions from Llama 3 8B via Ollama (proven with real responses, not mocked).
 
-- [ ] **S02: Registration + Writing Editor + Sample Flow** `risk:medium` `depends:[S01]`
+- [x] **S02: Registration + Writing Editor + Sample Flow** `risk:medium` `depends:[S01]`
   > After this: Participant registers, gets randomly assigned a group, sees a pre-study instructions screen, and can edit writing samples in-place with revision history — progressing through all 3 randomized samples.
 
-- [ ] **S03: AI Chat Panel + Mode Enforcement** `risk:medium` `depends:[S01,S02]`
+- [x] **S03: AI Chat Panel + Mode Enforcement** `risk:medium` `depends:[S01,S02]`
   > After this: Participant prompts the AI for suggestions inside the study flow — single-shot disables input after one prompt, iterative allows multi-turn conversation, scaffold shows prompt engineering instruction panel alongside chat.
 
-- [ ] **S04: Data Logging + Survey + Completion** `risk:low` `depends:[S02,S03]`
+- [x] **S04: Data Logging + Survey + Completion** `risk:low` `depends:[S02,S03]`
   > After this: Full end-to-end study run captures all research data — prompts, AI responses, revision snapshots, timestamps, time per sample, prompt length — plus Likert survey after each sample and a completion screen.
 
-- [ ] **S05: Researcher Dashboard + CSV Export** `risk:low` `depends:[S04]`
+- [x] **S05: Researcher Dashboard + CSV Export** `risk:low` `depends:[S04]`
   > After this: Researchers browse all participant sessions, view prompt/response history, revision diffs, survey answers, filter by group, and export everything to CSV.
 
 ## Boundary Map
