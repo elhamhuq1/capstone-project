@@ -609,6 +609,7 @@ export async function getExportData() {
       sessionId: sessions.id,
       participantName: participants.name,
       participantEmail: participants.email,
+      participantCreatedAt: participants.createdAt,
       group: sessions.groupAssignment,
       status: sessions.status,
       sampleOrder: sessions.sampleOrder,
@@ -624,16 +625,24 @@ export async function getExportData() {
   const sampleMap = new Map(allSamples.map((s) => [s.id, s]));
 
   const rows: Array<{
+    session_id: string;
     participant_name: string;
     participant_email: string;
+    participant_created_at: string;
     group: string;
     sample_id: number;
     sample_title: string;
     sample_index: number;
+    sample_grammarly_score: number | null;
     prompt_count: number;
     total_prompt_chars: number;
+    prompts_text: string;
+    ai_responses_text: string;
     revision_count: number;
+    final_revision_text: string;
     time_seconds: number | null;
+    sample_started_at: string | null;
+    sample_completed_at: string | null;
     survey_authorship: number | null;
     survey_satisfaction: number | null;
     survey_cognitive_load: number | null;
@@ -653,7 +662,7 @@ export async function getExportData() {
       const sampleId = sampleOrder[index];
       const sample = sampleMap.get(sampleId);
 
-      // Prompt count and total chars
+      // Prompt count, total chars, and full text
       const promptRows = await db
         .select()
         .from(prompts)
@@ -662,24 +671,41 @@ export async function getExportData() {
             eq(prompts.sessionId, session.sessionId),
             eq(prompts.sampleId, sampleId),
           ),
-        );
+        )
+        .orderBy(prompts.promptNumber);
       const promptCount = promptRows.length;
       const totalPromptChars = promptRows.reduce(
         (sum, p) => sum + p.content.length,
         0,
       );
 
-      // Revision count
-      const revisionCountRows = await db
-        .select({ value: count() })
+      // Fetch AI responses for each prompt
+      const promptTexts: string[] = [];
+      const aiResponseTexts: string[] = [];
+      for (const p of promptRows) {
+        promptTexts.push(`[Prompt ${p.promptNumber}] ${p.content}`);
+        const aiRows = await db
+          .select()
+          .from(aiResponses)
+          .where(eq(aiResponses.promptId, p.id));
+        if (aiRows.length > 0) {
+          aiResponseTexts.push(`[Response ${p.promptNumber}] ${aiRows[0].content}`);
+        }
+      }
+
+      // Revisions: count and final text
+      const revisionRows = await db
+        .select()
         .from(revisions)
         .where(
           and(
             eq(revisions.sessionId, session.sessionId),
             eq(revisions.sampleId, sampleId),
           ),
-        );
-      const revisionCount = revisionCountRows[0]?.value ?? 0;
+        )
+        .orderBy(revisions.revisionNumber);
+      const revisionCount = revisionRows.length;
+      const finalRevision = revisionRows.length > 0 ? revisionRows[revisionRows.length - 1].content : '';
 
       // Timing
       const timingRows = await db
@@ -732,16 +758,24 @@ export async function getExportData() {
       }
 
       rows.push({
+        session_id: session.sessionId,
         participant_name: session.participantName,
         participant_email: session.participantEmail,
+        participant_created_at: session.participantCreatedAt,
         group: session.group,
         sample_id: sampleId,
         sample_title: sample?.title ?? '',
         sample_index: index,
+        sample_grammarly_score: sample?.grammarlyScore ?? null,
         prompt_count: promptCount,
         total_prompt_chars: totalPromptChars,
+        prompts_text: promptTexts.join(' ||| '),
+        ai_responses_text: aiResponseTexts.join(' ||| '),
         revision_count: revisionCount,
+        final_revision_text: finalRevision,
         time_seconds: timeSeconds,
+        sample_started_at: timing?.startedAt ?? null,
+        sample_completed_at: timing?.completedAt ?? null,
         survey_authorship: surveyMap['authorship'] ?? null,
         survey_satisfaction: surveyMap['satisfaction'] ?? null,
         survey_cognitive_load: surveyMap['cognitive_load'] ?? null,
