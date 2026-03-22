@@ -628,7 +628,7 @@ export async function getExportData() {
     session_id: string;
     participant_name: string;
     participant_email: string;
-    participant_created_at: string;
+    participant_created_at: string | Date;
     group: string;
     sample_id: number;
     sample_title: string;
@@ -641,8 +641,8 @@ export async function getExportData() {
     revision_count: number;
     final_revision_text: string;
     time_seconds: number | null;
-    sample_started_at: string | null;
-    sample_completed_at: string | null;
+    sample_started_at: string | Date | null;
+    sample_completed_at: string | Date | null;
     survey_authorship: number | null;
     survey_satisfaction: number | null;
     survey_cognitive_load: number | null;
