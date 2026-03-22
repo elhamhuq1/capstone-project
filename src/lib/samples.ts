@@ -1,5 +1,6 @@
-import { type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import { eq } from 'drizzle-orm';
 import { writingSamples } from './db/schema';
+import { db } from './db';
 
 export const WRITING_SAMPLES: {
   id: number;
@@ -53,18 +54,24 @@ Emerging technologies such as autonomous vehicles and mobility-as-a-service plat
 
 /**
  * Seeds the writing_samples table with placeholder data.
- * Idempotent — uses onConflictDoNothing so re-running is safe.
+ * Idempotent — checks for existing rows before inserting.
  */
-export async function seedWritingSamples(database: BetterSQLite3Database<any>) {
+export async function seedWritingSamples() {
   for (const sample of WRITING_SAMPLES) {
-    await database
+    // Check if sample already exists
+    const existing = await db
+      .select({ id: writingSamples.id })
+      .from(writingSamples)
+      .where(eq(writingSamples.id, sample.id));
+    if (existing.length > 0) continue;
+
+    await db
       .insert(writingSamples)
       .values({
         id: sample.id,
         title: sample.title,
         content: sample.content,
         grammarlyScore: sample.grammarlyScore,
-      })
-      .onConflictDoNothing();
+      });
   }
 }

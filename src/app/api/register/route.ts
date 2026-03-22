@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import {
   createParticipant,
   findParticipantByEmail,
@@ -61,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure writing samples are seeded (idempotent)
-    await seedWritingSamples(db);
+    await seedWritingSamples();
 
     // Create participant if they don't exist
     const participant = existing ?? (await createParticipant(trimmedName, trimmedEmail));

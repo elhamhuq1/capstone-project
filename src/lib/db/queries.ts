@@ -131,7 +131,7 @@ export async function advanceSample(sessionId: string) {
       .set({
         currentSampleIndex: newIndex,
         status: 'completed',
-        completedAt: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        completedAt: new Date(),
       })
       .where(eq(sessions.id, sessionId))
       .returning();
@@ -360,7 +360,7 @@ export async function completeSampleTiming(
   const rows = await db
     .update(sampleTimings)
     .set({
-      completedAt: sql`datetime('now')`,
+      completedAt: sql`now()`,
     })
     .where(
       and(
@@ -651,8 +651,8 @@ export async function getExportData() {
     final_content: string | null;
     changes_summary: string | null;
     session_status: string;
-    session_started_at: string;
-    session_completed_at: string | null;
+    session_started_at: string | Date;
+    session_completed_at: string | Date | null;
   }> = [];
 
   for (const session of sessionRows) {

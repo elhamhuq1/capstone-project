@@ -1,80 +1,79 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { pgTable, serial, text, integer, timestamp } from 'drizzle-orm/pg-core';
 
-export const participants = sqliteTable('participants', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const participants = pgTable('participants', {
+  id: serial('id').primaryKey(),
   email: text('email').notNull().unique(),
   name: text('name').notNull(),
-  createdAt: text('created_at').default(sql`(datetime('now'))`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const sessions = sqliteTable('sessions', {
+export const sessions = pgTable('sessions', {
   id: text('id').primaryKey(),
   participantId: integer('participant_id').notNull(),
   groupAssignment: text('group_assignment').notNull(),
   sampleOrder: text('sample_order').notNull(),
   currentSampleIndex: integer('current_sample_index').default(0).notNull(),
   status: text('status').default('instructions').notNull(),
-  startedAt: text('started_at').default(sql`(datetime('now'))`).notNull(),
-  completedAt: text('completed_at'),
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
 });
 
-export const writingSamples = sqliteTable('writing_samples', {
+export const writingSamples = pgTable('writing_samples', {
   id: integer('id').primaryKey(),
   title: text('title').notNull(),
   content: text('content').notNull(),
   grammarlyScore: integer('grammarly_score'),
 });
 
-export const revisions = sqliteTable('revisions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const revisions = pgTable('revisions', {
+  id: serial('id').primaryKey(),
   sessionId: text('session_id').notNull(),
   sampleId: integer('sample_id').notNull(),
   content: text('content').notNull(),
   revisionNumber: integer('revision_number').notNull(),
-  createdAt: text('created_at').default(sql`(datetime('now'))`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const prompts = sqliteTable('prompts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const prompts = pgTable('prompts', {
+  id: serial('id').primaryKey(),
   sessionId: text('session_id').notNull(),
   sampleId: integer('sample_id').notNull(),
   content: text('content').notNull(),
   promptNumber: integer('prompt_number').notNull(),
-  createdAt: text('created_at').default(sql`(datetime('now'))`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const aiResponses = sqliteTable('ai_responses', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const aiResponses = pgTable('ai_responses', {
+  id: serial('id').primaryKey(),
   promptId: integer('prompt_id').notNull(),
   content: text('content').notNull(),
-  createdAt: text('created_at').default(sql`(datetime('now'))`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const surveyResponses = sqliteTable('survey_responses', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const surveyResponses = pgTable('survey_responses', {
+  id: serial('id').primaryKey(),
   sessionId: text('session_id').notNull(),
   sampleId: integer('sample_id').notNull(),
   questionId: text('question_id').notNull(),
   rating: integer('rating').notNull(),
-  createdAt: text('created_at').default(sql`(datetime('now'))`).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-export const sampleTimings = sqliteTable('sample_timings', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const sampleTimings = pgTable('sample_timings', {
+  id: serial('id').primaryKey(),
   sessionId: text('session_id').notNull(),
   sampleId: integer('sample_id').notNull(),
   sampleIndex: integer('sample_index').notNull(),
-  startedAt: text('started_at').default(sql`(datetime('now'))`).notNull(),
-  completedAt: text('completed_at'),
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
 });
 
-export const finalSubmissions = sqliteTable('final_submissions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const finalSubmissions = pgTable('final_submissions', {
+  id: serial('id').primaryKey(),
   sessionId: text('session_id').notNull(),
   sampleId: integer('sample_id').notNull(),
   originalContent: text('original_content').notNull(),
   finalContent: text('final_content').notNull(),
   changesJson: text('changes_json').notNull(),
-  submittedAt: text('submitted_at').default(sql`(datetime('now'))`).notNull(),
+  submittedAt: timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),
 });

@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getExportData } from '@/lib/db/queries';
 
-function escapeCSVField(value: string | number | null | undefined): string {
+function escapeCSVField(value: string | number | Date | null | undefined): string {
+  if (value instanceof Date) {
+    return `"${value.toISOString()}"`;
+  }
   const str = value == null ? '' : String(value);
   // Replace newlines with spaces, then wrap in double quotes with internal quotes escaped
   const cleaned = str.replace(/\r?\n/g, ' ');
