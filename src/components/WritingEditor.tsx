@@ -121,23 +121,23 @@ export default function WritingEditor({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', backgroundColor: '#FFFFFF' }}>
       {/* ── Editor header ── */}
-      <div style={{
+      <div className="editor-header" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottom: '1px solid #EEECE7',
-        padding: '20px 48px 20px 48px',
+        padding: '16px 24px',
       }}>
-        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#6B6760', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
+        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#6B6760', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
           Writing Sample
         </span>
-        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#6B6760' }}>
+        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#6B6760' }}>
           {revisions.length} revision{revisions.length !== 1 ? 's' : ''} saved
         </span>
       </div>
 
       {/* ── Editor body ── */}
-      <div style={{ flex: 1, overflow: 'hidden', padding: '40px 48px' }}>
+      <div className="editor-body" style={{ flex: 1, overflow: 'hidden', padding: '24px' }}>
         {viewingRevision ? (
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -154,7 +154,7 @@ export default function WritingEditor({
             <div style={{
               flex: 1,
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize: '20px',
+              fontSize: '17px',
               lineHeight: 1.75,
               color: '#1A1816',
               whiteSpace: 'pre-wrap',
@@ -168,6 +168,12 @@ export default function WritingEditor({
           <textarea
             value={text}
             onChange={(e) => { setText(e.target.value); onTextChange?.(e.target.value); }}
+            data-gramm="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             style={{
               width: '100%',
               height: '100%',
@@ -175,7 +181,7 @@ export default function WritingEditor({
               border: 'none',
               outline: 'none',
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize: '20px',
+              fontSize: '17px',
               lineHeight: 1.75,
               color: '#1A1816',
               backgroundColor: 'transparent',
@@ -188,19 +194,20 @@ export default function WritingEditor({
       </div>
 
       {/* ── Revision history bar ── */}
-      <div style={{
+      <div className="revision-bar" style={{
         borderTop: '2px solid #E4E2DC',
-        padding: '16px 48px',
+        padding: '12px 24px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px',
+        gap: '12px',
+        flexWrap: 'wrap',
       }}>
-        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790', letterSpacing: '0.08em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
-          Revision History
+        <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '11px', color: '#9A9790', letterSpacing: '0.08em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
+          History
         </span>
         <div style={{
           display: 'flex',
-          gap: '10px',
+          gap: '8px',
           overflowX: 'auto',
           overflowY: 'hidden',
           flex: 1,
@@ -226,8 +233,8 @@ export default function WritingEditor({
                 }}
                 style={{
                   fontFamily: 'var(--font-inter), sans-serif',
-                  fontSize: '16px',
-                  padding: '6px 14px',
+                  fontSize: '13px',
+                  padding: '5px 12px',
                   borderRadius: '6px',
                   border: `1.5px solid ${isViewing ? '#111010' : '#D8D5CF'}`,
                   backgroundColor: isViewing ? '#111010' : '#F4F2ED',
@@ -244,9 +251,9 @@ export default function WritingEditor({
         </div>
 
         {/* Save / submit actions */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           {saveMessage && (
-            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: saveMessage === 'Saved!' ? '#16A34A' : '#DC2626' }}>
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: saveMessage === 'Saved!' ? '#16A34A' : '#DC2626' }}>
               {saveMessage}
             </span>
           )}
@@ -255,14 +262,15 @@ export default function WritingEditor({
             disabled={saving || text.trim().length === 0}
             style={{
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize: '15px',
-              padding: '10px 20px',
+              fontSize: '14px',
+              padding: '8px 16px',
               borderRadius: '6px',
               border: '1.5px solid #D8D5CF',
               backgroundColor: '#F4F2ED',
               color: '#1A1816',
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.5 : 1,
+              whiteSpace: 'nowrap' as const,
             }}
           >
             {saving ? 'Saving…' : 'Save Revision'}

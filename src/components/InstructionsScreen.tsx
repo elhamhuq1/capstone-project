@@ -6,30 +6,27 @@ interface InstructionsScreenProps {
 }
 
 const GROUP_LABEL: Record<string, string> = {
-  'single-shot': 'Single-Shot',
+  'zero-shot': 'Zero-Shot',
   iterative: 'Iterative',
   scaffold: 'Scaffold',
 };
 
 const GROUP_NOTE: Record<string, string> = {
-  'single-shot': 'You will have one opportunity to ask the AI for assistance per sample.',
+  'zero-shot': 'You will have one opportunity to ask the AI for assistance per sample.',
   iterative: 'You can ask the AI for assistance as many times as you like per sample.',
   scaffold: 'You can ask the AI for assistance as many times as you like. A prompt engineering guide will be shown alongside the chat.',
 };
 
 export default function InstructionsScreen({ group, onBegin }: InstructionsScreenProps) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED' }}>
+    <div className="instructions-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED' }}>
       {/* ── Left dark panel ── */}
-      <div style={{
-        width: '440px',
-        flexShrink: 0,
+      <div className="instructions-sidebar" style={{
         backgroundColor: '#111010',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '56px 52px',
-        minHeight: '100vh',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#F4F2ED', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -40,7 +37,7 @@ export default function InstructionsScreen({ group, onBegin }: InstructionsScree
           </h1>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '40px' }}>
           {/* Step 1 — done */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #4A4844', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -69,10 +66,10 @@ export default function InstructionsScreen({ group, onBegin }: InstructionsScree
       </div>
 
       {/* ── Right content panel ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '72px 80px' }}>
-        <div style={{ maxWidth: '580px', display: 'flex', flexDirection: 'column', gap: '44px' }}>
+      <div className="instructions-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ maxWidth: '580px', width: '100%', display: 'flex', flexDirection: 'column', gap: '44px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '40px', fontWeight: 800, color: '#1A1816', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, color: '#1A1816', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
               Study Instructions
             </h2>
             <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '19px', fontWeight: 300, color: '#6B6760', lineHeight: 1.5, margin: 0 }}>
@@ -106,7 +103,7 @@ export default function InstructionsScreen({ group, onBegin }: InstructionsScree
             flexDirection: 'column',
             gap: '8px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#D4C17A', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>
                 Your group
               </span>
@@ -143,6 +140,36 @@ export default function InstructionsScreen({ group, onBegin }: InstructionsScree
           </button>
         </div>
       </div>
+
+      <style>{`
+        .instructions-layout {
+          flex-direction: row;
+        }
+        .instructions-sidebar {
+          width: 440px;
+          flex-shrink: 0;
+          min-height: 100vh;
+        }
+        .instructions-main {
+          padding: 72px 80px;
+        }
+        @media (max-width: 768px) {
+          .instructions-layout {
+            flex-direction: column !important;
+          }
+          .instructions-sidebar {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: 32px 24px !important;
+          }
+          .instructions-sidebar h1 {
+            font-size: 36px !important;
+          }
+          .instructions-main {
+            padding: 32px 20px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

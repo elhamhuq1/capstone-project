@@ -46,6 +46,44 @@ body {
   margin: 0;
 }
 
+/* ── Block Grammarly & browser writing assistants ─────────────── */
+
+/* Grammarly injects these elements — hide them globally */
+grammarly-desktop-integration,
+grammarly-extension,
+grammarly-popups,
+grammarly-mirror,
+[data-grammarly-shadow-root],
+.grammarly-desktop-integration {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Suppress the Grammarly green underlines on textareas/contenteditable */
+textarea[data-gramm],
+[contenteditable][data-gramm] {
+  /* Reset Grammarly's data attributes via CSS specificity */
+}
+
+/* Suppress Google Gemini "Help me write" context menu & overlays */
+.gm-help-me-write,
+.gm-help-me-write-overlay,
+[data-help-me-write],
+.help-me-write-ghost,
+.smart-compose-ghost,
+.writingassistance-overlay,
+div[aria-label="Help me write"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* Markdown rendering inside chat bubbles */
 .prose-chat {
   font-size: 0.9375rem;
@@ -65,4 +103,14 @@ body {
 /* Spinner for loading states */
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Toast enter animation */
+@keyframes toastSlideIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes toastSlideOut {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
 }

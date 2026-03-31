@@ -4,11 +4,11 @@ import {
   findParticipantByEmail,
   createSession,
   getIncompleteSessionByParticipant,
-  getGroupCounts,
+  getTotalSessionCount,
 } from '@/lib/db/queries';
 import { seedWritingSamples } from '@/lib/samples';
 
-const GROUPS = ['single-shot', 'iterative', 'scaffold'] as const;
+const GROUPS = ['zero-shot', 'iterative', 'scaffold'] as const;
 
 function shuffledSampleOrder(): number[] {
   const order = [1, 2, 3];
@@ -19,10 +19,12 @@ function shuffledSampleOrder(): number[] {
   return order;
 }
 
-function pickGroup(counts: Record<string, number>): string {
-  const min = Math.min(...GROUPS.map((g) => counts[g] ?? 0));
-  const candidates = GROUPS.filter((g) => (counts[g] ?? 0) === min);
-  return candidates[Math.floor(Math.random() * candidates.length)];
+/**
+ * Round-robin group assignment: 1st registration → zero-shot,
+ * 2nd → iterative, 3rd → scaffold, then repeats.
+ */
+function pickGroupRoundRobin(totalSessions: number): string {
+  return GROUPS[totalSessions % GROUPS.length];
 }
 
 export async function POST(request: NextRequest) {
@@ -65,9 +67,9 @@ export async function POST(request: NextRequest) {
     // Create participant if they don't exist
     const participant = existing ?? (await createParticipant(trimmedName, trimmedEmail));
 
-    // Balanced group assignment
-    const counts = await getGroupCounts();
-    const group = pickGroup(counts);
+    // Round-robin group assignment based on total session count
+    const totalSessions = await getTotalSessionCount();
+    const group = pickGroupRoundRobin(totalSessions);
 
     // Randomized sample order (Fisher-Yates)
     const sampleOrder = shuffledSampleOrder();

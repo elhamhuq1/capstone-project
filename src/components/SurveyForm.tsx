@@ -52,11 +52,9 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
   }
 
   return (
-    <div style={{ display: 'flex', width: '100%', height: '100%', backgroundColor: '#F4F2ED' }}>
+    <div className="survey-layout" style={{ display: 'flex', width: '100%', height: '100%', backgroundColor: '#F4F2ED' }}>
       {/* ── Left dark sidebar ── */}
-      <div style={{
-        width: '320px',
-        flexShrink: 0,
+      <div className="survey-sidebar" style={{
         backgroundColor: '#111010',
         padding: '48px 40px',
         display: 'flex',
@@ -72,7 +70,7 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
           </h1>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '40px' }}>
           {/* Step 1 — done */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #4A4844', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -103,10 +101,9 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
       </div>
 
       {/* ── Right form panel ── */}
-      <div style={{
+      <div className="survey-main" style={{
         flex: 1,
         backgroundColor: '#F4F2ED',
-        padding: '48px 56px',
         display: 'flex',
         flexDirection: 'column',
         gap: '40px',
@@ -114,13 +111,13 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
       }}>
         {/* Header */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '16px', color: '#6B6760', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>
+          <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '14px', color: '#6B6760', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>
             After Sample {sampleIndex}
           </span>
-          <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '36px', fontWeight: 800, color: '#1A1816', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
+          <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: 800, color: '#1A1816', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
             Quick check-in
           </h2>
-          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '19px', fontWeight: 300, color: '#4A4844', lineHeight: 1.5, margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '17px', fontWeight: 300, color: '#4A4844', lineHeight: 1.5, margin: 0 }}>
             Rate each statement from 1 (strongly disagree) to 5 (strongly agree).
           </p>
         </div>
@@ -129,11 +126,11 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
         <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
           {SURVEY_QUESTIONS.map((q) => (
             <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '22px', fontWeight: 600, color: '#1A1816', lineHeight: 1.4, margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(17px, 3vw, 22px)', fontWeight: 600, color: '#1A1816', lineHeight: 1.4, margin: 0 }}>
                 {q.text}
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div className="rating-buttons" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   {[1, 2, 3, 4, 5].map((value) => {
                     const selected = ratings[q.id] === value;
                     return (
@@ -143,12 +140,12 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
                         onClick={() => handleRating(q.id, value)}
                         aria-label={`Rate ${value} for "${q.text}"`}
                         style={{
-                          width: '60px', height: '60px', borderRadius: '50%',
+                          width: '52px', height: '52px', borderRadius: '50%',
                           border: `2px solid ${selected ? '#111010' : '#D8D5CF'}`,
                           backgroundColor: selected ? '#111010' : '#FFFFFF',
                           color: selected ? '#F4F2ED' : '#6B6760',
                           fontFamily: 'var(--font-inter), sans-serif',
-                          fontSize: '22px',
+                          fontSize: '20px',
                           fontWeight: selected ? 700 : 600,
                           cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -161,9 +158,9 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
                     );
                   })}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '358px' }}>
-                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790' }}>Strongly disagree</span>
-                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790' }}>Strongly agree</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '310px' }}>
+                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>Strongly disagree</span>
+                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>Strongly agree</span>
                 </div>
               </div>
             </div>
@@ -186,9 +183,9 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
             color: !allAnswered || submitting ? '#9A9790' : '#111010',
             border: 'none',
             borderRadius: '8px',
-            padding: '22px',
+            padding: '20px',
             fontFamily: 'var(--font-inter), sans-serif',
-            fontSize: '22px',
+            fontSize: '20px',
             fontWeight: 700,
             cursor: !allAnswered || submitting ? 'not-allowed' : 'pointer',
             transition: 'background-color 0.15s',
@@ -203,6 +200,41 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
           </p>
         )}
       </div>
+
+      <style>{`
+        .survey-layout {
+          flex-direction: row;
+        }
+        .survey-sidebar {
+          width: 320px;
+          flex-shrink: 0;
+        }
+        .survey-main {
+          padding: 48px 56px;
+        }
+        @media (max-width: 768px) {
+          .survey-layout {
+            flex-direction: column !important;
+            height: auto !important;
+            min-height: 100vh;
+          }
+          .survey-sidebar {
+            width: 100% !important;
+            padding: 28px 20px !important;
+          }
+          .survey-sidebar h1 {
+            font-size: 32px !important;
+          }
+          .survey-main {
+            padding: 24px 20px !important;
+          }
+          .rating-buttons button {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 17px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

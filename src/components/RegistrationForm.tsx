@@ -105,7 +105,7 @@ export default function RegistrationForm() {
           padding: '18px 22px',
         }}>
           <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '18px', fontStyle: 'italic', color: '#6B6760' }}>
-            Randomly assigned at start
+            Assigned automatically
           </span>
           <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#9A9790' }}>
             No selection needed

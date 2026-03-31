@@ -10,60 +10,74 @@ export const WRITING_SAMPLES: {
 }[] = [
   {
     id: 1,
-    title: 'The Impact of Remote Work on Team Collaboration',
-    content: `Remote work has became one of the most significant changes in how companys operate in recent years. While many organizations was forced to adopt it during the pandemic, the long-term effects on team collaboration is still being debated by researchers and business leaders alike. This essay examines the ways that remote work effects team dynamics, communication patterns, and overall productivity.
+    title: 'Technology and Workplace Productivity',
+    content: `Technology has changed the way people work in many different ways, and it is something that continues to evolve over time in ways that are both predictable and also sometimes unexpected which makes it kind of hard to fully understand its overall impact. Many people would agree that technology makes work easier, faster, and more efficient, however this is not always completely true in every situation that exists in the modern workplace today and sometimes even the opposite happens. While tools such as email, messaging apps, and project management software are designed to help people stay organized they can also create new problems that did not exist before, which is something people don't always think about enough.
 
-One of the biggest challenge that remote teams face are the lack of spontaneous interactions. In a traditional office, employees might run into each other in the hallway or break room, leading to informal conversations that often sparks new ideas. These chance encounters, which researchers calls "watercooler moments," is nearly impossible to replicate in a virtual environment. Many teams has tried to create digital equivalents, such as virtual coffee chats or random pairing programs, but these solutions feels forced and artificial to most participants.
+For instance, email allows workers to communicate quickly which is helpful in many cases where fast responses are needed, but at the same time it creates an expectation that people should always be available even outside of working hours. This can be stressful for many employees. And it makes it difficult to separate personal life from work life, especially when working remotely which has become more common in recent years. Because of this workers may feel overwhelmed, this can reduce productivity even though the tools are meant to improve it, which is kind of ironic in a way.
 
-Communication in remote settings also tend to be more asynchronous, which have both advantages and disadvantages. On the positive side, team members can respond to messages at their own pace, allowing for more thoughtful and considered responses. However, this asynchronicity often lead to misunderstandings because written communication lack the tonal cues and body language that helps people interpret meaning in face-to-face conversations. A message that was intended as a lighthearted joke might be perceived as criticism, creating unnecessary tension between collegues.
+Another issue that comes from technology is the overuse of productivity tools themselves, people spend a lot of time organizing tasks, updating apps, checking notifications instead of actually completing meaningful work. This results in a situation where people feel busy, but they are not necessarily productive, or at least not in a way that actually matters. In some cases this over reliance on tools can even reduce a person's ability to manage time independently without assistance from software which is not a good thing long term.
 
-The technology tools available for remote collaboration has improved dramatically, but they also introduces new problems. Video conferencing fatigue, often refered to as "Zoom fatigue," has become a widespread phenomenon that effect workers across industries. Studies shows that constant video calls is more mentally exhausting than in-person meetings because our brains has to work harder to process non-verbal cues through a screen. Additionally, the pressure to appear engaged and professional on camera add an extra layer of stress that don't exist in traditional office settings.
+Additionally technology can create distractions that are difficult to avoid especially when notifications are constantly appearing on screens throughout the day, even if a person tries to focus it is easy to get interrupted which breaks concentration. This reduces efficiency over time in ways that are not always obvious at first. There is also the issue of multitasking, which people think helps but actually doesn't always help and sometimes makes things worse.
 
-Despite these challenges, remote work also offer unique opportunities for improving collaboration. Teams that span multiple time zones can achive a "follow the sun" workflow, where work is handed off between team members in different locations, effectively extending the productive hours of the team. This approach require careful coordination and clear documentation practices, but when executed well, it can significantly accelerate project timelines and improve the quality of deliverables that teams produces together.`,
+In conclusion technology has both positive and negative effects on productivity, and it is not entirely accurate to say that it always improves efficiency because that is not always true. Instead it depends on how individuals and organizations choose to use it, which is something that requires more attention and awareness than it currently gets in many workplaces today, and maybe should be looked at more carefully.`,
     grammarlyScore: 54,
   },
   {
     id: 2,
-    title: 'Social Media and Mental Health in Adolescents',
-    content: `The relationship between social media usage and adolescent mental health have attracted considerable attention from psychologists, educators, and parents over the past decade. As smartphones has become ubiquitous among teenagers, concerns about the psychological impact of platforms like Instagram, TikTok, and Snapchat has grown substantially. This essay explore the current evidence regarding how social media effects the mental wellbeing of young people and what steps could be taken to mitigate potential harms.
+    title: 'The Value of College Education',
+    content: `College education is often seen as an important step in achieving success, but the reality is more complicated than people sometimes assume when they talk about it. Many individuals believe that going to college will automatically lead to better job opportunities and higher income, which is often true in many cases, however this is not guaranteed for everyone who decides to pursue a degree and that is something that gets overlooked a lot. There are many factors that influence whether college is worth it, including the field of study, cost of tuition, and the individual goals of the student which can vary a lot from person to person.
 
-Research consistently show that heavy social media use among adolescents are correlated with higher rates of anxiety and depression. A study conducted by the Royal Society for Public Health in the United Kingdom founded that Instagram was rated as the most detrimental platform for young people's mental health, primarily due to its emphasis on curated images that promote unrealistic beauty standards. Teenagers who spend more then three hours per day on social media platforms is significantly more likely to report symptoms of depression compared to those who use these platforms less frequently.
+One of the main arguments in favor of college is that it provides knowledge and skills that are necessary for certain careers, such as engineering, medicine, and education. Without a degree it would be very difficult, if not impossible to enter these professions. But at the same time there are other careers where a college degree is not required, and individuals can succeed through experience, training programs, or even starting their own business. This raises the question of whether college is truly necessary for everyone, or if it is only beneficial in certain situations which is something people don't always agree on.
 
-The phenomenon of cyberbullying represent another serious concern associated with social media use among young people. Unlike traditional bullying, which is generally limited to school hours and physical spaces, cyberbullying can occur at any time and follows victims into their homes. The anonymity that some platforms provides can embolden bullies to say things they would never say face-to-face, and the permanence of digital content means that hurtful messages and images can be shared and reshared indefinitely. Victims of cyberbullying often experiences feelings of helplessness because they cannot escape the harassment, even when they is physically away from they're aggressors.
+Another point to consider is the cost of college which has been increasing significantly over the years, making it less accessible for many students. Some people graduate with large amounts of debt, which can take many years to pay off and this financial burden can affect their future decisions. For example, delaying buying a house or not being able to save money properly. While scholarships and financial aid are available they do not always cover all expenses, and not every student qualifies for enough support which creates another problem.
 
-However, it would be overly simplistic to characterize social media as purely harmful for adolescents. Many young people uses these platforms to find community and support, particularly those who belongs to marginalized groups or who lives in isolated areas. LGBTQ+ teenagers, for example, often credit social media with helping them connect with others who share their experiences and providing access to resources that is not available in their immediate enviroment. For these individuals, social media can serve as a crucial lifeline that reduce feelings of isolation and improves overall wellbeing.
+In addition to academic knowledge college is also said to teach important life skills such as independence, critical thinking, and communication. These skills are valuable in many areas of life, not just careers. However it is possible to develop these skills outside of college as well, through work experience or other forms of learning, so it is not completely unique to college like some people claim that it is.
 
-Moving forward, a balanced approach that acknowledge both the risks and benefits of social media is essential. Schools should incorporate digital literacy programs that teaches students how to navigate social media in healthy ways, including recognizing when their usage are becoming problematic. Parents needs to maintain open dialogues with their children about online experiences rather than simply restricting access, which often backfires and damages trust. Technology companies also bears responsibility for designing platforms that prioritize user wellbeing over engagement metrics that rewards addictive behavior patterns.`,
+In conclusion while college can be beneficial in many ways, it is not the only path to success and it may not be the best choice for everyone depending on their situation and goals. Therefore it is important to carefully consider whether attending college is the right decision, instead of just assuming it is necessary because that might not always be the case for every person.`,
     grammarlyScore: 64,
   },
   {
     id: 3,
-    title: 'Sustainable Urban Transportation Solutions',
-    content: `Cities around the world is grappling with the challenge of creating transportation systems that is both efficient and environmentally sustainable. As urban populations continues to grow, the traditional reliance on private automobiles have proven to be unsustainable, contributing to traffic congestion, air pollution, and greenhouse gas emissions. This essay examines several promising approaches to sustainable urban transportation and discusses the barriers that must be overcame for widespread adoption.
+    title: 'Social Media and Its Effects on Society',
+    content: `Social media has become a major part of modern life, influencing how people communicate, share information, and spend their time on a daily basis in ways that were not really possible before. While many people use social media for positive reasons such as staying connected with friends and family, there are also several negative effects that should be considered more seriously than they often are but usually are not. The impact of social media is complex, and it cannot be described as entirely good or entirely bad without considering multiple perspectives, which people don't always do.
 
-Public transit remains the backbone of sustainable urban transportation, but many existing systems requires significant modernization. Cities like Tokyo and Singapore has demonstrated that well-designed public transit networks can handle enormous passenger volumes while maintaining reliability and comfort. In contrast, many American cities suffers from decades of underinvestment in public transportation, resulting in systems that is slow, infrequent, and inconvenient compared to driving. Increasing ridership on public transit require not only improving service quality but also addressing the "last mile" problem — the gap between transit stops and passengers' final destinations that often make public transit impractical for many trips.
+One of the most obvious benefits of social media is the ability to communicate instantly with others regardless of distance, which has made it easier to maintain relationships over long periods of time. This is especially important for people who live far away from their loved ones. However this constant connectivity can also reduce the quality of in person interactions, as people may become more focused on their online presence instead of real life relationships which is not always a good thing.
 
-Cycling infrastructure represents another critical component of sustainable urban transportation that many cities has began to invest in heavily. Cities such as Copenhagen and Amsterdam, where cycling accounts for a significant portion of daily trips, demonstrates that when safe and convenient infrastructure is provided, people will choose bikes over cars for short to medium distance trips. Protected bike lanes, which physically separates cyclists from motor vehicle traffic, has been shown to dramatically increase cycling rates and reduce accidents. However, implementing cycling infrastructure in cities that was designed primarily for cars can be politically contentious, as it often requires reallocating road space or parking areas.
+Another issue with social media is the way it can affect mental health, particularly among younger users who may be more influenced by what they see online. People often compare themselves to others based on posts and pictures, which can lead to feelings of inadequacy or low self esteem. This is because social media often presents an unrealistic version of reality where people only share the best parts of their lives and not the bad parts, which creates a false image of what life is actually like.
 
-Electric vehicles, including both private cars and shared mobility options, offers a way to reduce transportation emissions without requiring fundamental changes to urban form. The rapid decline in battery costs have made electric vehicles increasingly competitive with conventional vehicles, and many governments is offering incentives to accelerate adoption. However, critics argue that electric vehicles alone cannot solve urban transportation challenges because they does not address congestion or the inefficient use of urban space that car-centric planning creates. A single-occupancy electric vehicle still takes up the same amount of road space as a gasoline-powered car and still require the same amount of parking infrastructure.
+In addition to mental health concerns social media can also contribute to the spread of misinformation, which is a growing problem in today's society and has been talked about more recently. Information can be shared quickly without being verified, leading to confusion and misunderstanding among users. This can have serious consequences especially when it involves important topics such as health or politics, which makes it even more concerning.
 
-Emerging technologies such as autonomous vehicles and mobility-as-a-service platforms have the potential to further transform urban transportation, though their long-term impacts remains uncertain. Some researchers predicts that autonomous vehicles could reduce the need for private car ownership by making shared rides more convenient and affordable, while others warns that they could actually increase vehicle miles traveled by making driving so easy that people choose it over public transit and active transportation modes. The most promising path forward likely involves integrating multiple sustainable transportation modes into seamless, user-friendly systems that makes it easy for residents to get around without relying on private cars.`,
+In conclusion social media has both advantages and disadvantages, and its overall impact depends on how it is used by individuals. While it offers many benefits it also presents risks that should not be ignored, and people should be more mindful of their usage habits in order to minimize negative outcomes, although not everyone actually does this which is part of the problem.`,
     grammarlyScore: 75,
   },
 ];
 
 /**
- * Seeds the writing_samples table with placeholder data.
- * Idempotent — checks for existing rows before inserting.
+ * Seeds the writing_samples table with essay data.
+ * Upserts — updates content if sample already exists with different text.
  */
 export async function seedWritingSamples() {
   for (const sample of WRITING_SAMPLES) {
     // Check if sample already exists
     const existing = await db
-      .select({ id: writingSamples.id })
+      .select({ id: writingSamples.id, content: writingSamples.content })
       .from(writingSamples)
       .where(eq(writingSamples.id, sample.id));
-    if (existing.length > 0) continue;
+
+    if (existing.length > 0) {
+      // Update if content has changed
+      if (existing[0].content !== sample.content) {
+        await db
+          .update(writingSamples)
+          .set({
+            title: sample.title,
+            content: sample.content,
+            grammarlyScore: sample.grammarlyScore,
+          })
+          .where(eq(writingSamples.id, sample.id));
+      }
+      continue;
+    }
 
     await db
       .insert(writingSamples)

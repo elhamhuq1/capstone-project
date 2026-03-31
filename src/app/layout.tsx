@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
+import WritingAssistantBlocker from "@/components/WritingAssistantBlocker";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexMono.variable}`}>
+        <WritingAssistantBlocker />
         {children}
       </body>
     </html>

@@ -6,17 +6,14 @@ interface CompletionScreenProps {
 
 export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED' }}>
+    <div className="completion-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED' }}>
       {/* ── Left dark panel ── */}
-      <div style={{
-        width: '440px',
-        flexShrink: 0,
+      <div className="completion-sidebar" style={{
         backgroundColor: '#111010',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '56px 52px',
-        minHeight: '100vh',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '16px', color: '#F4F2ED', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
@@ -27,7 +24,7 @@ export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
           </h1>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginTop: '40px' }}>
           {/* All steps done */}
           {[{ num: '1', label: 'Register' }, { num: '2', label: 'Writing Tasks' }].map((s) => (
             <div key={s.num} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -48,8 +45,8 @@ export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
       </div>
 
       {/* ── Right content panel ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', padding: '80px 96px' }}>
-        <div style={{ maxWidth: '620px', display: 'flex', flexDirection: 'column', gap: '40px' }}>
+      <div className="completion-main" style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+        <div style={{ maxWidth: '620px', width: '100%', display: 'flex', flexDirection: 'column', gap: '40px' }}>
           {/* Hero */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{
@@ -61,12 +58,12 @@ export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
                 <path d="M8 18L15 25L28 11" stroke="#111010" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '56px', fontWeight: 900, color: '#1A1816', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
+            <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(36px, 7vw, 56px)', fontWeight: 900, color: '#1A1816', letterSpacing: '-0.03em', lineHeight: 1, margin: 0 }}>
               You&apos;re all<br />done.
             </h2>
           </div>
 
-          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '22px', color: '#4A4844', lineHeight: 1.6, margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '20px', color: '#4A4844', lineHeight: 1.6, margin: 0 }}>
             Thank you for participating. Your responses have been recorded and will contribute to research on how prompt engineering skill affects AI-assisted writing.
           </p>
 
@@ -75,7 +72,7 @@ export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
             backgroundColor: '#FFFFFF',
             border: '2px solid #E4E2DC',
             borderRadius: '12px',
-            padding: '28px 32px',
+            padding: '24px 28px',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px',
@@ -83,13 +80,13 @@ export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
             <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
               Your session
             </span>
-            <div style={{ display: 'flex', gap: '40px' }}>
+            <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '32px', fontWeight: 800, color: '#1A1816', lineHeight: '40px' }}>3</span>
                 <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '16px', color: '#6B6760' }}>Samples revised</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '28px', fontWeight: 700, color: '#1A1816', lineHeight: '40px', wordBreak: 'break-all' as const }}>{sessionId.slice(0, 8)}</span>
+                <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '24px', fontWeight: 700, color: '#1A1816', lineHeight: '40px', wordBreak: 'break-all' as const }}>{sessionId.slice(0, 8)}</span>
                 <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '16px', color: '#6B6760' }}>Session ID</span>
               </div>
             </div>
@@ -114,6 +111,36 @@ export default function CompletionScreen({ sessionId }: CompletionScreenProps) {
           </Link>
         </div>
       </div>
+
+      <style>{`
+        .completion-layout {
+          flex-direction: row;
+        }
+        .completion-sidebar {
+          width: 440px;
+          flex-shrink: 0;
+          min-height: 100vh;
+        }
+        .completion-main {
+          padding: 80px 96px;
+        }
+        @media (max-width: 768px) {
+          .completion-layout {
+            flex-direction: column !important;
+          }
+          .completion-sidebar {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: 32px 24px !important;
+          }
+          .completion-sidebar h1 {
+            font-size: 36px !important;
+          }
+          .completion-main {
+            padding: 32px 20px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

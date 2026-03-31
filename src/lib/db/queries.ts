@@ -167,7 +167,7 @@ export async function getGroupCounts() {
     .groupBy(sessions.groupAssignment);
 
   const counts: Record<string, number> = {
-    'single-shot': 0,
+    'zero-shot': 0,
     iterative: 0,
     scaffold: 0,
   };
@@ -175,6 +175,16 @@ export async function getGroupCounts() {
     counts[row.groupAssignment] = row.count;
   }
   return counts;
+}
+
+/**
+ * Get total number of sessions for round-robin group assignment.
+ */
+export async function getTotalSessionCount(): Promise<number> {
+  const rows = await db
+    .select({ value: count() })
+    .from(sessions);
+  return rows[0]?.value ?? 0;
 }
 
 // ─── Session Lookup ─────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 /* ---------- types ---------- */
 interface PromptEntry {
@@ -60,7 +60,7 @@ interface SessionDetail {
 const GROUP_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
   scaffold:      { bg: '#D4C17A', color: '#111010' },
   iterative:     { bg: '#1A1816', color: '#F4F2ED' },
-  'single-shot': { bg: '#4A4844', color: '#F4F2ED' },
+  'zero-shot': { bg: '#4A4844', color: '#F4F2ED' },
 };
 
 const STATUS_BADGE_STYLE: Record<string, { bg: string; color: string }> = {
@@ -152,12 +152,14 @@ function TruncatedText({ text, maxLen = 300 }: { text: string; maxLen?: number }
 /* ========== page ========== */
 export default function SessionDetailPage() {
   const params = useParams<{ sessionId: string }>();
+  const router = useRouter();
   const sessionId = params.sessionId;
 
   const [detail, setDetail] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notFound, setNotFound] = useState(false);
+  const [deletingSession, setDeletingSession] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -250,13 +252,52 @@ export default function SessionDetailPage() {
             </span>
           </div>
         </div>
-        <div style={{ marginTop: '20px', display: 'flex', gap: '40px' }}>
+        <div style={{ marginTop: '20px', display: 'flex', gap: '40px', alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#6B6760' }}>
             <strong style={{ color: '#1A1816', fontWeight: 600 }}>Started:</strong> {fmtDate(startedAt)}
           </span>
           <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#6B6760' }}>
             <strong style={{ color: '#1A1816', fontWeight: 600 }}>Completed:</strong> {fmtDate(completedAt)}
           </span>
+          <button
+            onClick={async () => {
+              const confirmed = window.confirm(
+                `Delete this session for "${participant.name}"?\n\nThis will permanently remove all data. This cannot be undone.`
+              );
+              if (!confirmed) return;
+              setDeletingSession(true);
+              try {
+                const res = await fetch(`/api/researcher/sessions/${sessionId}`, { method: 'DELETE' });
+                if (!res.ok) {
+                  const data = await res.json();
+                  alert(data.error || 'Failed to delete session');
+                  return;
+                }
+                router.push('/researcher');
+              } catch {
+                alert('Network error — failed to delete session');
+              } finally {
+                setDeletingSession(false);
+              }
+            }}
+            disabled={deletingSession}
+            style={{
+              marginLeft: 'auto',
+              fontFamily: 'var(--font-inter), sans-serif',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: deletingSession ? '#9A9790' : '#DC2626',
+              backgroundColor: deletingSession ? '#F4F2ED' : '#FEF2F2',
+              border: '1.5px solid',
+              borderColor: deletingSession ? '#D8D5CF' : '#FECACA',
+              borderRadius: '8px',
+              padding: '8px 18px',
+              cursor: deletingSession ? 'not-allowed' : 'pointer',
+              transition: 'all 0.1s',
+            }}
+          >
+            {deletingSession ? 'Deleting…' : 'Delete Session'}
+          </button>
         </div>
       </div>
 

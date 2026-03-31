@@ -55,15 +55,16 @@ function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, on
         color: '#111010',
         border: 'none',
         borderRadius: '8px',
-        padding: '12px 28px',
+        padding: '10px 20px',
         fontFamily: 'var(--font-inter), sans-serif',
-        fontSize: '16px',
+        fontSize: '15px',
         fontWeight: 600,
         cursor: advancing ? 'not-allowed' : 'pointer',
         transition: 'background-color 0.15s',
+        whiteSpace: 'nowrap' as const,
       }}
     >
-      {advancing ? 'Submitting…' : sampleIndex === totalSamples ? 'Submit Final Sample' : 'Submit Revision'}
+      {advancing ? 'Submitting…' : sampleIndex === totalSamples ? 'Submit Final' : 'Submit'}
     </button>
   );
 }
@@ -98,6 +99,56 @@ interface SessionData {
   surveyCompleted: boolean;
 }
 
+// ── Mobile tab switcher component ──
+function MobileTabBar({ activeTab, onTabChange, group }: {
+  activeTab: 'editor' | 'chat';
+  onTabChange: (tab: 'editor' | 'chat') => void;
+  group: string;
+}) {
+  return (
+    <div className="mobile-tab-bar" style={{
+      display: 'none', /* shown via CSS on mobile */
+      borderBottom: '2px solid #E4E2DC',
+      backgroundColor: '#FFFFFF',
+    }}>
+      <button
+        onClick={() => onTabChange('editor')}
+        style={{
+          flex: 1,
+          padding: '12px',
+          border: 'none',
+          backgroundColor: activeTab === 'editor' ? '#FFFFFF' : '#F4F2ED',
+          borderBottom: activeTab === 'editor' ? '2px solid #1A1816' : '2px solid transparent',
+          fontFamily: 'var(--font-inter), sans-serif',
+          fontSize: '14px',
+          fontWeight: activeTab === 'editor' ? 600 : 400,
+          color: activeTab === 'editor' ? '#1A1816' : '#6B6760',
+          cursor: 'pointer',
+        }}
+      >
+        ✏️ Editor
+      </button>
+      <button
+        onClick={() => onTabChange('chat')}
+        style={{
+          flex: 1,
+          padding: '12px',
+          border: 'none',
+          backgroundColor: activeTab === 'chat' ? '#FFFFFF' : '#F4F2ED',
+          borderBottom: activeTab === 'chat' ? '2px solid #1A1816' : '2px solid transparent',
+          fontFamily: 'var(--font-inter), sans-serif',
+          fontSize: '14px',
+          fontWeight: activeTab === 'chat' ? 600 : 400,
+          color: activeTab === 'chat' ? '#1A1816' : '#6B6760',
+          cursor: 'pointer',
+        }}
+      >
+        💬 AI Chat{group === 'scaffold' ? ' + Tips' : ''}
+      </button>
+    </div>
+  );
+}
+
 export default function StudyPage() {
   const params = useParams<{ sessionId: string }>();
   const sessionId = params.sessionId;
@@ -107,6 +158,7 @@ export default function StudyPage() {
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [pendingSurvey, setPendingSurvey] = useState<{ sampleId: number; sampleIndex: number } | null>(null);
+  const [mobileTab, setMobileTab] = useState<'editor' | 'chat'>('editor');
 
   const fetchSession = useCallback(async () => {
     try {
@@ -125,13 +177,11 @@ export default function StudyPage() {
       const data: SessionData = await res.json();
       setSessionData(data);
 
-      // Map session status to UI phase
       switch (data.status) {
         case 'instructions':
           setPhase('instructions');
           break;
         case 'in-progress':
-          // Resume logic: check if sample was submitted but survey not yet done
           if (data.sampleSubmitted && !data.surveyCompleted && data.currentSample) {
             setPendingSurvey({
               sampleId: data.currentSample.id,
@@ -172,14 +222,12 @@ export default function StudyPage() {
         return;
       }
 
-      // Re-fetch session to sync state
       await fetchSession();
     } catch {
       setErrorMessage('Network error — please try again');
     }
   }
 
-  // ─── Timing start: fire when editing phase loads for a sample ─────
   useEffect(() => {
     if (phase === 'editing' && sessionData?.currentSample) {
       fetch(`/api/session/${sessionId}/timing`, {
@@ -200,7 +248,6 @@ export default function StudyPage() {
   }
 
   async function handleSurveyComplete() {
-    // Advance to next sample (or complete)
     try {
       const res = await fetch(`/api/session/${sessionId}/advance`, {
         method: 'POST',
@@ -219,13 +266,14 @@ export default function StudyPage() {
     }
     setPendingSurvey(null);
     editorTextRef.current = '';
+    setMobileTab('editor');
     await fetchSession();
   }
 
   const GROUP_LABEL: Record<string, string> = {
-    'single-shot': 'Single-Shot Mode',
-    iterative: 'Iterative Mode',
-    scaffold: 'Scaffold Mode',
+    'zero-shot': 'Zero-Shot',
+    iterative: 'Iterative',
+    scaffold: 'Scaffold',
   };
 
   // ─── Loading ────────────────────────────────────────────────
@@ -245,7 +293,7 @@ export default function StudyPage() {
   // ─── Error ──────────────────────────────────────────────────
   if (phase === 'error') {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F2ED' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F2ED', padding: '20px' }}>
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '28px', fontWeight: 700, color: '#1A1816' }}>{errorMessage}</h1>
           <Link href="/register" style={{ marginTop: '16px', display: 'inline-block', fontFamily: 'var(--font-inter), sans-serif', fontSize: '16px', color: '#2558E8' }}>
@@ -267,39 +315,40 @@ export default function StudyPage() {
     const totalSamples = sessionData.totalSamples;
     const group = sessionData.group;
 
-    // Initialize ref so submit has access even if user doesn't type
     if (!editorTextRef.current) {
       editorTextRef.current = sessionData.currentSample.content;
     }
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: '#F4F2ED' }}>
+      <div className="study-editing-root" style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: '#F4F2ED' }}>
         {/* ── Top bar ── */}
-        <div style={{
+        <div className="study-top-bar" style={{
           backgroundColor: '#111010',
-          height: '72px',
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 52px',
+          padding: '0 24px',
+          minHeight: '56px',
+          gap: '12px',
+          flexWrap: 'wrap',
         }}>
           {/* Left: sample counter + group badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '26px', fontWeight: 800, color: '#F4F2ED', letterSpacing: '-0.02em' }}>
-              Sample {sampleIndex} of {totalSamples}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <span className="sample-counter" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '18px', fontWeight: 800, color: '#F4F2ED', letterSpacing: '-0.02em', whiteSpace: 'nowrap' as const }}>
+              Sample {sampleIndex}/{totalSamples}
             </span>
-            <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#F4F2ED', backgroundColor: '#2A2824', borderRadius: '6px', padding: '8px 16px' }}>
+            <span className="group-badge" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '13px', color: '#F4F2ED', backgroundColor: '#2A2824', borderRadius: '6px', padding: '5px 12px', whiteSpace: 'nowrap' as const }}>
               {GROUP_LABEL[group] ?? group}
             </span>
           </div>
 
           {/* Center: progress dots */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="progress-dots" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             {Array.from({ length: totalSamples }, (_, i) => (
               <div key={i} style={{
-                width: '32px', height: '6px', borderRadius: '3px',
-                backgroundColor: i < sampleIndex - 1 ? '#D4C17A' : i === sampleIndex - 1 ? '#D4C17A' : '#3A3836',
+                width: '24px', height: '5px', borderRadius: '3px',
+                backgroundColor: i < sampleIndex ? '#D4C17A' : '#3A3836',
                 opacity: i < sampleIndex ? 1 : 0.4,
               }} />
             ))}
@@ -316,10 +365,13 @@ export default function StudyPage() {
           />
         </div>
 
+        {/* ── Mobile tab bar ── */}
+        <MobileTabBar activeTab={mobileTab} onTabChange={setMobileTab} group={group} />
+
         {/* ── Split view ── */}
-        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div className="study-split-view" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
           {/* Left: Editor */}
-          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', borderRight: '2px solid #E4E2DC' }}>
+          <div className="study-editor-pane" style={{ flex: 1, minWidth: 0, overflow: 'hidden', borderRight: '2px solid #E4E2DC' }}>
             <WritingEditor
               sessionId={sessionId}
               sample={sessionData.currentSample}
@@ -332,7 +384,7 @@ export default function StudyPage() {
             />
           </div>
           {/* Right: Chat panel */}
-          <div style={{ width: '480px', flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div className="study-chat-pane" style={{ width: '480px', flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             {group === 'scaffold' && <ScaffoldPanel />}
             <div style={{ flex: 1, minHeight: 0 }}>
               <ChatPanel
@@ -346,6 +398,47 @@ export default function StudyPage() {
             </div>
           </div>
         </div>
+
+        {/* Responsive styles for editing view */}
+        <style>{`
+          @media (max-width: 768px) {
+            .mobile-tab-bar {
+              display: flex !important;
+            }
+            .study-split-view {
+              flex-direction: column !important;
+            }
+            .study-editor-pane {
+              border-right: none !important;
+              display: ${mobileTab === 'editor' ? 'block' : 'none'} !important;
+              flex: 1 !important;
+            }
+            .study-chat-pane {
+              width: 100% !important;
+              display: ${mobileTab === 'chat' ? 'flex' : 'none'} !important;
+              flex: 1 !important;
+            }
+            .study-top-bar {
+              padding: 8px 12px !important;
+              min-height: 48px !important;
+            }
+            .sample-counter {
+              font-size: 15px !important;
+            }
+            .group-badge {
+              font-size: 11px !important;
+              padding: 3px 8px !important;
+            }
+            .progress-dots {
+              display: none !important;
+            }
+          }
+          @media (min-width: 769px) and (max-width: 1024px) {
+            .study-chat-pane {
+              width: 360px !important;
+            }
+          }
+        `}</style>
       </div>
     );
   }

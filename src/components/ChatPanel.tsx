@@ -69,7 +69,7 @@ export default function ChatPanel({ sessionId, sampleId, sampleContent: _sampleC
     }
   }, [messages]);
 
-  const isSingleShotExhausted = group === 'single-shot' && promptCount >= 1;
+  const isSingleShotExhausted = group === 'zero-shot' && promptCount >= 1;
   const isInputDisabled = isStreaming || isSingleShotExhausted;
 
   const handleSend = useCallback(async () => {
@@ -161,13 +161,13 @@ export default function ChatPanel({ sessionId, sampleId, sampleContent: _sampleC
                   {msg.role === 'user' ? 'You' : 'AI'}
                 </span>
                 <div style={{
-                  maxWidth: '380px',
-                  padding: '16px 18px',
+                  maxWidth: '90%',
+                  padding: '14px 16px',
                   borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                   backgroundColor: msg.role === 'user' ? '#2E2B28' : '#242220',
                   border: msg.role === 'assistant' ? '1px solid #3A3632' : 'none',
                   fontFamily: 'var(--font-inter), sans-serif',
-                  fontSize: '19px',
+                  fontSize: '16px',
                   lineHeight: 1.6,
                   color: '#F4F2ED',
                 }}>
@@ -225,7 +225,7 @@ export default function ChatPanel({ sessionId, sampleId, sampleContent: _sampleC
       )}
 
       {/* ── Input area ── */}
-      <div style={{ borderTop: '1px solid #2E2B28', padding: '20px 28px', display: 'flex', alignItems: 'flex-end', gap: '12px' }}>
+      <div style={{ borderTop: '1px solid #2E2B28', padding: '16px 20px', display: 'flex', alignItems: 'flex-end', gap: '10px' }}>
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -234,15 +234,21 @@ export default function ChatPanel({ sessionId, sampleId, sampleContent: _sampleC
           rows={1}
           placeholder={isSingleShotExhausted ? 'No more prompts available' : 'Ask the AI for suggestions…'}
           aria-label="Chat message input"
+          data-gramm="false"
+          data-gramm_editor="false"
+          data-enable-grammarly="false"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           style={{
             flex: 1,
             resize: 'none',
             backgroundColor: '#242220',
             border: '1.5px solid #3A3632',
             borderRadius: '10px',
-            padding: '16px 18px',
+            padding: '14px 16px',
             fontFamily: 'var(--font-inter), sans-serif',
-            fontSize: '18px',
+            fontSize: '16px',
             color: isInputDisabled ? '#706C68' : '#F4F2ED',
             outline: 'none',
             lineHeight: 1.4,
@@ -259,9 +265,9 @@ export default function ChatPanel({ sessionId, sampleId, sampleContent: _sampleC
             color: isInputDisabled || !input.trim() ? '#706C68' : '#111010',
             border: 'none',
             borderRadius: '8px',
-            padding: '16px 18px',
+            padding: '14px 16px',
             fontFamily: 'var(--font-inter), sans-serif',
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: 600,
             cursor: isInputDisabled || !input.trim() ? 'not-allowed' : 'pointer',
             transition: 'background-color 0.15s',

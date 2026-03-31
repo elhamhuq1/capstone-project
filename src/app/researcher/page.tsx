@@ -18,7 +18,7 @@ interface Session {
 
 const GROUP_FILTERS = [
   { label: 'All Groups', value: '' },
-  { label: 'Single-Shot', value: 'single-shot' },
+  { label: 'Zero-Shot', value: 'zero-shot' },
   { label: 'Iterative', value: 'iterative' },
   { label: 'Scaffold', value: 'scaffold' },
 ] as const;
@@ -26,7 +26,7 @@ const GROUP_FILTERS = [
 const GROUP_BADGE: Record<string, { bg: string; color: string }> = {
   scaffold:     { bg: '#D4C17A', color: '#111010' },
   iterative:    { bg: '#1A1816', color: '#F4F2ED' },
-  'single-shot':{ bg: '#4A4844', color: '#F4F2ED' },
+  'zero-shot':{ bg: '#4A4844', color: '#F4F2ED' },
 };
 
 function formatDate(iso: string) {
@@ -51,6 +51,7 @@ export default function ResearcherPage() {
   const [error, setError] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchSessions = useCallback(async (group: string) => {
     setLoading(true);
@@ -72,6 +73,31 @@ export default function ResearcherPage() {
 
   useEffect(() => { fetchSessions(activeFilter); }, [activeFilter, fetchSessions]);
 
+  async function handleDelete(sessionId: string, participantName: string) {
+    const confirmed = window.confirm(
+      `Delete session for "${participantName}"?\n\nThis will permanently remove all data (revisions, prompts, AI responses, survey responses) for this session. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(sessionId);
+    try {
+      const res = await fetch(`/api/researcher/sessions/${sessionId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Failed to delete session');
+        return;
+      }
+      // Remove from local state
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+    } catch {
+      alert('Network error — failed to delete session');
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   const filtered = search.trim()
     ? sessions.filter(s =>
         s.participantName.toLowerCase().includes(search.toLowerCase()) ||
@@ -81,7 +107,7 @@ export default function ResearcherPage() {
 
   const counts = {
     total: sessions.length,
-    'single-shot': sessions.filter(s => s.group === 'single-shot').length,
+    'zero-shot': sessions.filter(s => s.group === 'zero-shot').length,
     iterative:     sessions.filter(s => s.group === 'iterative').length,
     scaffold:      sessions.filter(s => s.group === 'scaffold').length,
     samplesTotal:  sessions.reduce((acc, s) => acc + s.samplesCompleted, 0),
@@ -112,7 +138,7 @@ export default function ResearcherPage() {
         {([
           { value: counts.total,            label: 'Participants' },
           'divider',
-          { value: counts['single-shot'],   label: 'Single-Shot' },
+          { value: counts['zero-shot'],   label: 'Zero-Shot' },
           { value: counts.iterative,        label: 'Iterative' },
           { value: counts.scaffold,         label: 'Scaffold' },
           'divider',
@@ -218,7 +244,7 @@ export default function ResearcherPage() {
           {/* Header */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '200px 1fr 160px 100px 100px 1fr 100px',
+            gridTemplateColumns: '200px 1fr 140px 90px 90px 1fr 160px',
             borderBottom: '2px solid #1A1816',
             padding: '14px 24px',
           }}>
@@ -242,7 +268,7 @@ export default function ResearcherPage() {
                 key={s.sessionId}
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '200px 1fr 160px 100px 100px 1fr 100px',
+                  gridTemplateColumns: '200px 1fr 140px 90px 90px 1fr 160px',
                   alignItems: 'center',
                   padding: '18px 24px',
                   borderBottom: idx < filtered.length - 1 ? '1px solid #EEECE7' : 'none',
@@ -277,12 +303,32 @@ export default function ResearcherPage() {
                 <span style={sans({ fontSize: '14px', color: '#6B6760' })}>
                   {formatDate(s.startedAt)}
                 </span>
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px' }}>
                   <Link href={`/researcher/${s.sessionId}`} style={sans({
                     fontSize: '14px', fontWeight: 600, color: '#2558E8', textDecoration: 'none',
                   })}>
-                    View →
+                    View
                   </Link>
+                  <button
+                    onClick={() => handleDelete(s.sessionId, s.participantName)}
+                    disabled={deleting === s.sessionId}
+                    style={sans({
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: deleting === s.sessionId ? '#9A9790' : '#DC2626',
+                      background: 'none',
+                      border: '1.5px solid',
+                      borderColor: deleting === s.sessionId ? '#D8D5CF' : '#FECACA',
+                      borderRadius: '6px',
+                      padding: '5px 10px',
+                      cursor: deleting === s.sessionId ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.1s',
+                      whiteSpace: 'nowrap',
+                    })}
+                    title="Delete this session and all its data"
+                  >
+                    {deleting === s.sessionId ? '…' : 'Delete'}
+                  </button>
                 </div>
               </div>
             );

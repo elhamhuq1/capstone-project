@@ -2,17 +2,14 @@ import RegistrationForm from '@/components/RegistrationForm';
 
 export default function RegisterPage() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#F4F2ED' }}>
-      {/* ── Left dark panel ── */}
-      <div style={{
-        width: '440px',
-        flexShrink: 0,
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#F4F2ED' }}>
+      {/* ── Left dark panel — hidden on mobile, shown on desktop ── */}
+      <div className="sidebar-panel" style={{
         backgroundColor: '#111010',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         padding: '56px 52px',
-        minHeight: '100vh',
       }}>
         {/* Title */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -39,7 +36,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Steps */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '40px' }}>
           {/* Step 1 — active */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
             <div style={{
@@ -89,18 +86,17 @@ export default function RegisterPage() {
       </div>
 
       {/* ── Right form panel ── */}
-      <div style={{
+      <div className="main-panel" style={{
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '72px 80px',
       }}>
-        <div style={{ maxWidth: '560px', display: 'flex', flexDirection: 'column', gap: '44px' }}>
+        <div style={{ maxWidth: '560px', width: '100%', display: 'flex', flexDirection: 'column', gap: '44px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <h2 style={{
               fontFamily: 'var(--font-inter), sans-serif',
-              fontSize: '40px',
+              fontSize: 'clamp(28px, 5vw, 40px)',
               fontWeight: 800,
               color: '#1A1816',
               letterSpacing: '-0.02em',
@@ -123,6 +119,40 @@ export default function RegisterPage() {
           <RegistrationForm />
         </div>
       </div>
+
+      {/* Responsive styles */}
+      <style>{`
+        .sidebar-panel {
+          width: 440px;
+          flex-shrink: 0;
+          min-height: 100vh;
+        }
+        .main-panel {
+          padding: 72px 80px;
+        }
+        /* Two-column layout on desktop */
+        @media (min-width: 769px) {
+          div:has(> .sidebar-panel) {
+            flex-direction: row !important;
+          }
+          .sidebar-panel {
+            min-height: 100vh;
+          }
+        }
+        @media (max-width: 768px) {
+          .sidebar-panel {
+            width: 100% !important;
+            min-height: auto !important;
+            padding: 32px 24px !important;
+          }
+          .sidebar-panel h1 {
+            font-size: 36px !important;
+          }
+          .main-panel {
+            padding: 32px 20px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

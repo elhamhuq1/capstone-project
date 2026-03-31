@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllSessions } from '@/lib/db/queries';
 
-const VALID_GROUPS = ['single-shot', 'iterative', 'scaffold'];
+const VALID_GROUPS = ['zero-shot', 'iterative', 'scaffold'];
 
 export async function GET(request: NextRequest) {
   try {
