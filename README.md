@@ -10,7 +10,7 @@ Participants are randomly assigned to one of three experimental groups, then rev
 
 | Group | AI Access | Extra Support |
 |---|---|---|
-| **Single-shot** | 1 prompt per sample | None |
+| **Zero-shot** | 1 prompt per sample | None |
 | **Iterative** | Unlimited prompts | None |
 | **Scaffold** | Unlimited prompts | Prompt engineering tips panel |
 
@@ -47,6 +47,9 @@ Group assignment uses round-robin to ensure balanced enrollment.
 - **Tailwind CSS** — styling
 - **Vercel** — deployment
 
+The information below allows you to run this project locally, but we are already hosted on versel if you would like to skip this step.
+User Registration: https://capstone-seven-phi.vercel.app/register
+Researcher Dashboard: https://capstone-seven-phi.vercel.app/researcher
 ## Setup
 
 ### Prerequisites
@@ -123,7 +126,7 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to 
 Navigate to [http://localhost:3000/researcher](http://localhost:3000/researcher) to:
 
 - **Browse all sessions** — see every participant's group, status, and timing
-- **Filter by group** — compare single-shot vs. iterative vs. scaffold
+- **Filter by group** — compare zero-shot vs. iterative vs. scaffold
 - **Drill into a session** — view prompts, AI responses, revision history, and survey ratings per sample
 - **Delete sessions** — remove test or incomplete sessions
 - **Export CSV** — download all study data for analysis in Excel, R, Python, etc.
@@ -185,7 +188,7 @@ src/
 | Tables don't exist | Run `npx drizzle-kit push` |
 | Chat responses are slow | Gemini 2.5 Flash typically responds in 2–5 seconds. Check your network. |
 | "Session not found" | The session UUID in the URL doesn't exist. Re-register. |
-| Single-shot group gets extra prompts | The chat panel enforces the 1-prompt limit client-side and server-side |
+| Zero-shot group gets extra prompts | The chat panel enforces the 1-prompt limit client-side and server-side |
 
 ## Notes
 
