@@ -48,7 +48,9 @@ Group assignment uses round-robin to ensure balanced enrollment.
 - **Vercel** — deployment
 
 The information below allows you to run this project locally, but we are already hosted on versel if you would like to skip this step.
+
 User Registration: https://capstone-seven-phi.vercel.app/register
+
 Researcher Dashboard: https://capstone-seven-phi.vercel.app/researcher
 ## Setup
 
