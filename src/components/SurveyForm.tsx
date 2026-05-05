@@ -1,25 +1,123 @@
 'use client';
 
 import { useState } from 'react';
-import { SURVEY_QUESTIONS } from '@/lib/survey';
+import { TASK_SURVEY_QUESTIONS, type SurveyQuestion } from '@/lib/survey';
 
 interface SurveyFormProps {
   sessionId: string;
   sampleId: number;
   sampleIndex: number;
   totalSamples: number;
+  grammarlyScore: number | null;
   onSurveyComplete: () => void;
 }
 
-export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamples, onSurveyComplete }: SurveyFormProps) {
+function LikertQuestion({ question, value, onChange, scale }: {
+  question: SurveyQuestion;
+  value: number | undefined;
+  onChange: (v: number) => void;
+  scale: number;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 600, color: '#1A1816', lineHeight: 1.4, margin: 0 }}>
+        {question.text}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="rating-buttons" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {Array.from({ length: scale }, (_, i) => i + 1).map((v) => {
+            const selected = value === v;
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() => onChange(v)}
+                aria-label={`Rate ${v} for "${question.text}"`}
+                style={{
+                  width: '44px', height: '44px', borderRadius: '50%',
+                  border: `2px solid ${selected ? '#111010' : '#D8D5CF'}`,
+                  backgroundColor: selected ? '#111010' : '#FFFFFF',
+                  color: selected ? '#F4F2ED' : '#6B6760',
+                  fontFamily: 'var(--font-inter), sans-serif',
+                  fontSize: '17px',
+                  fontWeight: selected ? 700 : 600,
+                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.1s',
+                  flexShrink: 0,
+                }}
+              >
+                {v}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: `${scale * 52}px` }}>
+          <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>{question.lowLabel}</span>
+          <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>{question.highLabel}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NumberInputQuestion({ question, value, onChange }: {
+  question: SurveyQuestion;
+  value: number | undefined;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 600, color: '#1A1816', lineHeight: 1.4, margin: 0 }}>
+        {question.text}
+      </p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <input
+          type="number"
+          value={value !== undefined ? value : ''}
+          onChange={(e) => {
+            const num = parseInt(e.target.value, 10);
+            if (!isNaN(num)) onChange(num);
+          }}
+          placeholder={question.placeholder}
+          style={{
+            width: '120px',
+            padding: '14px 16px',
+            border: '2px solid #D8D5CF',
+            borderRadius: '8px',
+            fontFamily: 'var(--font-inter), sans-serif',
+            fontSize: '18px',
+            fontWeight: 600,
+            color: '#1A1816',
+            backgroundColor: '#FFFFFF',
+            outline: 'none',
+          }}
+        />
+        <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', color: '#6B6760' }}>
+          points
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamples, grammarlyScore, onSurveyComplete }: SurveyFormProps) {
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [numericValues, setNumericValues] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const allAnswered = SURVEY_QUESTIONS.every((q) => ratings[q.id] !== undefined);
+  const allAnswered = TASK_SURVEY_QUESTIONS.every((q) => {
+    if (q.type === 'number_input') return numericValues[q.id] !== undefined;
+    return ratings[q.id] !== undefined;
+  });
 
   function handleRating(questionId: string, value: number) {
     setRatings((prev) => ({ ...prev, [questionId]: value }));
+  }
+
+  function handleNumericValue(questionId: string, value: number) {
+    setNumericValues((prev) => ({ ...prev, [questionId]: value }));
   }
 
   async function handleSubmit() {
@@ -28,13 +126,17 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
     setError('');
 
     try {
+      const responses = TASK_SURVEY_QUESTIONS.map((q) => {
+        if (q.type === 'number_input') {
+          return { questionId: q.id, rating: 0, numericValue: numericValues[q.id] };
+        }
+        return { questionId: q.id, rating: ratings[q.id], numericValue: null };
+      });
+
       const res = await fetch(`/api/session/${sessionId}/survey`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sampleId,
-          responses: Object.entries(ratings).map(([questionId, rating]) => ({ questionId, rating })),
-        }),
+        body: JSON.stringify({ sampleId, responses }),
       });
 
       if (!res.ok) {
@@ -50,6 +152,11 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
       setSubmitting(false);
     }
   }
+
+  // Group questions for visual sections
+  const calibrationQ = TASK_SURVEY_QUESTIONS.filter(q => q.id.startsWith('calibration'));
+  const ownershipQ = TASK_SURVEY_QUESTIONS.filter(q => q.id.startsWith('ownership'));
+  const tlxQ = TASK_SURVEY_QUESTIONS.filter(q => q.id.startsWith('tlx'));
 
   return (
     <div className="survey-layout" style={{ display: 'flex', width: '100%', height: '100%', backgroundColor: '#F4F2ED' }}>
@@ -106,7 +213,7 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
         backgroundColor: '#F4F2ED',
         display: 'flex',
         flexDirection: 'column',
-        gap: '40px',
+        gap: '32px',
         overflowY: 'auto',
       }}>
         {/* Header */}
@@ -115,55 +222,95 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
             After Sample {sampleIndex}
           </span>
           <h2 style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(28px, 5vw, 36px)', fontWeight: 800, color: '#1A1816', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>
-            Quick check-in
+            Reflection check-in
           </h2>
           <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '17px', fontWeight: 300, color: '#4A4844', lineHeight: 1.5, margin: 0 }}>
-            Rate each statement from 1 (strongly disagree) to 5 (strongly agree).
+            These questions help us understand your experience. There are no right or wrong answers.
           </p>
         </div>
 
-        {/* Questions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
-          {SURVEY_QUESTIONS.map((q) => (
-            <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <p style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: 'clamp(17px, 3vw, 22px)', fontWeight: 600, color: '#1A1816', lineHeight: 1.4, margin: 0 }}>
-                {q.text}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div className="rating-buttons" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  {[1, 2, 3, 4, 5].map((value) => {
-                    const selected = ratings[q.id] === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => handleRating(q.id, value)}
-                        aria-label={`Rate ${value} for "${q.text}"`}
-                        style={{
-                          width: '52px', height: '52px', borderRadius: '50%',
-                          border: `2px solid ${selected ? '#111010' : '#D8D5CF'}`,
-                          backgroundColor: selected ? '#111010' : '#FFFFFF',
-                          color: selected ? '#F4F2ED' : '#6B6760',
-                          fontFamily: 'var(--font-inter), sans-serif',
-                          fontSize: '20px',
-                          fontWeight: selected ? 700 : 600,
-                          cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          transition: 'all 0.1s',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {value}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: '310px' }}>
-                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>Strongly disagree</span>
-                  <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '12px', color: '#9A9790' }}>Strongly agree</span>
-                </div>
+        {/* ── Section: Calibration ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '6px', height: '24px', borderRadius: '3px', backgroundColor: '#D4C17A' }} />
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#6B6760', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
+              Self-Assessment
+            </span>
+          </div>
+          {grammarlyScore != null && (
+            <div style={{
+              backgroundColor: '#111010',
+              borderRadius: '10px',
+              padding: '18px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+            }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '50%',
+                backgroundColor: '#2A2824',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '20px', fontWeight: 700, color: '#D4C17A' }}>
+                  {grammarlyScore}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '15px', fontWeight: 600, color: '#F4F2ED' }}>
+                  Original Grammarly Score
+                </span>
+                <span style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '14px', color: '#9A9790', lineHeight: 1.4 }}>
+                  This was the score before you made any edits. How much do you think it improved?
+                </span>
               </div>
             </div>
+          )}
+          {calibrationQ.map((q) => (
+            <NumberInputQuestion
+              key={q.id}
+              question={q}
+              value={numericValues[q.id]}
+              onChange={(v) => handleNumericValue(q.id, v)}
+            />
+          ))}
+        </div>
+
+        {/* ── Section: Ownership ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '6px', height: '24px', borderRadius: '3px', backgroundColor: '#D4C17A' }} />
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#6B6760', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
+              Ownership &amp; Attribution
+            </span>
+          </div>
+          {ownershipQ.map((q) => (
+            <LikertQuestion
+              key={q.id}
+              question={q}
+              value={ratings[q.id]}
+              onChange={(v) => handleRating(q.id, v)}
+              scale={7}
+            />
+          ))}
+        </div>
+
+        {/* ── Section: Cognitive Load ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '6px', height: '24px', borderRadius: '3px', backgroundColor: '#D4C17A' }} />
+            <span style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#6B6760', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>
+              Task Workload
+            </span>
+          </div>
+          {tlxQ.map((q) => (
+            <LikertQuestion
+              key={q.id}
+              question={q}
+              value={ratings[q.id]}
+              onChange={(v) => handleRating(q.id, v)}
+              scale={7}
+            />
           ))}
         </div>
 
@@ -191,12 +338,12 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
             transition: 'background-color 0.15s',
           }}
         >
-          {submitting ? 'Submitting…' : sampleIndex < totalSamples ? `Continue to Sample ${sampleIndex + 1}` : 'Complete Study'}
+          {submitting ? 'Submitting…' : sampleIndex < totalSamples ? `Continue to Sample ${sampleIndex + 1}` : 'Continue to Final Survey'}
         </button>
 
         {!allAnswered && (
           <p style={{ fontFamily: 'var(--font-ibm-plex-mono), monospace', fontSize: '13px', color: '#9A9790', margin: '-28px 0 0', textAlign: 'center' as const }}>
-            Answer all {SURVEY_QUESTIONS.length} questions to continue.
+            Answer all {TASK_SURVEY_QUESTIONS.length} questions to continue.
           </p>
         )}
       </div>
@@ -229,9 +376,9 @@ export default function SurveyForm({ sessionId, sampleId, sampleIndex, totalSamp
             padding: 24px 20px !important;
           }
           .rating-buttons button {
-            width: 44px !important;
-            height: 44px !important;
-            font-size: 17px !important;
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 15px !important;
           }
         }
       `}</style>

@@ -56,6 +56,19 @@ export const surveyResponses = pgTable('survey_responses', {
   sampleId: integer('sample_id').notNull(),
   questionId: text('question_id').notNull(),
   rating: integer('rating').notNull(),
+  /** For number_input questions (e.g. calibration prediction) */
+  numericValue: integer('numeric_value'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+/** Pre-study and post-study self-efficacy survey responses */
+export const prePostSurveyResponses = pgTable('pre_post_survey_responses', {
+  id: serial('id').primaryKey(),
+  sessionId: text('session_id').notNull(),
+  /** 'pre' or 'post' */
+  phase: text('phase').notNull(),
+  questionId: text('question_id').notNull(),
+  rating: integer('rating').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

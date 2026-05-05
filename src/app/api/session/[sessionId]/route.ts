@@ -6,6 +6,7 @@ import {
   updateSessionStatus,
   getSurveyResponses,
   getSampleTimings,
+  getPrePostSurveyResponses,
 } from '@/lib/db/queries';
 
 export async function GET(
@@ -54,6 +55,12 @@ export async function GET(
       surveyCompleted = surveyRows.length > 0;
     }
 
+    // Check pre/post survey completion
+    const preSurveyRows = await getPrePostSurveyResponses(session.id, 'pre');
+    const postSurveyRows = await getPrePostSurveyResponses(session.id, 'post');
+    const preSurveyCompleted = preSurveyRows.length > 0;
+    const postSurveyCompleted = postSurveyRows.length > 0;
+
     return NextResponse.json({
       id: session.id,
       participantId: session.participantId,
@@ -63,7 +70,7 @@ export async function GET(
       totalSamples: 3,
       sampleOrder,
       currentSample: sample
-        ? { id: sample.id, title: sample.title, content: sample.content }
+        ? { id: sample.id, title: sample.title, content: sample.content, grammarlyScore: sample.grammarlyScore }
         : null,
       revisions: revisionList.map((r) => ({
         id: r.id,
@@ -74,6 +81,8 @@ export async function GET(
       messages,
       sampleSubmitted,
       surveyCompleted,
+      preSurveyCompleted,
+      postSurveyCompleted,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -95,7 +104,7 @@ export async function POST(
     const { action } = body as { action?: string };
 
     if (action === 'begin') {
-      const updated = await updateSessionStatus(sessionId, 'in-progress');
+      const updated = await updateSessionStatus(sessionId, 'pre-survey');
       if (!updated) {
         return NextResponse.json(
           { error: 'Session not found' },

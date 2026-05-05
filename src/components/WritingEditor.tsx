@@ -6,6 +6,7 @@ interface Sample {
   id: number;
   title: string;
   content: string;
+  grammarlyScore?: number | null;
 }
 
 interface RevisionItem {
@@ -22,7 +23,7 @@ interface WritingEditorProps {
   sampleIndex: number;
   totalSamples: number;
   group: string;
-  onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number }) => void;
+  onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number; grammarlyScore: number | null }) => void;
   onTextChange?: (text: string) => void;
 }
 
@@ -99,7 +100,7 @@ export default function WritingEditor({
         body: JSON.stringify({ sampleId: sample.id, sampleIndex: sampleIndex - 1, event: 'complete' }),
       }).catch(() => {});
 
-      onSubmitForSurvey({ sampleId: sample.id, sampleIndex });
+      onSubmitForSurvey({ sampleId: sample.id, sampleIndex, grammarlyScore: sample.grammarlyScore ?? null });
     } catch {
       setSaveMessage('Network error');
     } finally {

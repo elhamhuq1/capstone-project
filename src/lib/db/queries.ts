@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { eq, and, sql, count, desc, sum } from 'drizzle-orm';
 import { db } from './index';
-import { participants, sessions, writingSamples, revisions, prompts, aiResponses, surveyResponses, sampleTimings, finalSubmissions } from './schema';
+import { participants, sessions, writingSamples, revisions, prompts, aiResponses, surveyResponses, prePostSurveyResponses, sampleTimings, finalSubmissions } from './schema';
 
 // ─── Participants ───────────────────────────────────────────────
 
@@ -125,13 +125,12 @@ export async function advanceSample(sessionId: string) {
   const newIndex = session.currentSampleIndex + 1;
 
   if (newIndex >= 3) {
-    // All samples completed
+    // All samples completed — transition to post-survey phase
     const rows = await db
       .update(sessions)
       .set({
         currentSampleIndex: newIndex,
-        status: 'completed',
-        completedAt: new Date(),
+        status: 'post-survey',
       })
       .where(eq(sessions.id, sessionId))
       .returning();
@@ -298,7 +297,7 @@ export async function getPromptsForSample(
 export async function saveSurveyResponses(
   sessionId: string,
   sampleId: number,
-  responses: Array<{ questionId: string; rating: number }>,
+  responses: Array<{ questionId: string; rating: number; numericValue?: number | null }>,
 ) {
   const rows = [];
   for (const response of responses) {
@@ -309,6 +308,7 @@ export async function saveSurveyResponses(
         sampleId,
         questionId: response.questionId,
         rating: response.rating,
+        numericValue: response.numericValue ?? null,
       })
       .returning();
     rows.push(inserted[0]);
@@ -327,6 +327,44 @@ export async function getSurveyResponses(sessionId: string, sampleId: number) {
       and(
         eq(surveyResponses.sessionId, sessionId),
         eq(surveyResponses.sampleId, sampleId),
+      ),
+    );
+}
+
+// ─── Pre/Post Self-Efficacy Survey ──────────────────────────────
+
+export async function savePrePostSurveyResponses(
+  sessionId: string,
+  phase: 'pre' | 'post',
+  responses: Array<{ questionId: string; rating: number }>,
+) {
+  const rows = [];
+  for (const response of responses) {
+    const inserted = await db
+      .insert(prePostSurveyResponses)
+      .values({
+        sessionId,
+        phase,
+        questionId: response.questionId,
+        rating: response.rating,
+      })
+      .returning();
+    rows.push(inserted[0]);
+  }
+  return rows;
+}
+
+export async function getPrePostSurveyResponses(sessionId: string, phase: 'pre' | 'post') {
+  return db
+    .select({
+      questionId: prePostSurveyResponses.questionId,
+      rating: prePostSurveyResponses.rating,
+    })
+    .from(prePostSurveyResponses)
+    .where(
+      and(
+        eq(prePostSurveyResponses.sessionId, sessionId),
+        eq(prePostSurveyResponses.phase, phase),
       ),
     );
 }
@@ -536,6 +574,7 @@ export async function getSessionDetail(sessionId: string) {
         .select({
           questionId: surveyResponses.questionId,
           rating: surveyResponses.rating,
+          numericValue: surveyResponses.numericValue,
         })
         .from(surveyResponses)
         .where(
@@ -546,7 +585,7 @@ export async function getSessionDetail(sessionId: string) {
         );
       const surveyMap: Record<string, number> = {};
       for (const s of surveyRows) {
-        surveyMap[s.questionId] = s.rating;
+        surveyMap[s.questionId] = s.numericValue ?? s.rating;
       }
 
       // Timing
@@ -653,11 +692,36 @@ export async function getExportData() {
     time_seconds: number | null;
     sample_started_at: string | Date | null;
     sample_completed_at: string | Date | null;
-    survey_authorship: number | null;
-    survey_satisfaction: number | null;
-    survey_cognitive_load: number | null;
-    survey_helpfulness: number | null;
-    survey_future_intent: number | null;
+    // Per-task validated survey fields (11 items)
+    survey_calibration_prediction: number | null;
+    survey_ownership_personal: number | null;
+    survey_ownership_responsibility: number | null;
+    survey_ownership_connection: number | null;
+    survey_ownership_emotional: number | null;
+    survey_ownership_mine: number | null;
+    survey_ownership_contribution: number | null;
+    survey_ownership_proud: number | null;
+    survey_tlx_mental_demand: number | null;
+    survey_tlx_effort: number | null;
+    survey_tlx_frustration: number | null;
+    // Pre-study self-efficacy (8 items, repeated per sample row)
+    pre_se_ideas: number | null;
+    pre_se_organize: number | null;
+    pre_se_express: number | null;
+    pre_se_grammar: number | null;
+    pre_se_structure: number | null;
+    pre_se_revise: number | null;
+    pre_se_focus: number | null;
+    pre_se_identify_errors: number | null;
+    // Post-study self-efficacy (8 items, repeated per sample row)
+    post_se_ideas: number | null;
+    post_se_organize: number | null;
+    post_se_express: number | null;
+    post_se_grammar: number | null;
+    post_se_structure: number | null;
+    post_se_revise: number | null;
+    post_se_focus: number | null;
+    post_se_identify_errors: number | null;
     final_content: string | null;
     changes_summary: string | null;
     session_status: string;
@@ -667,6 +731,14 @@ export async function getExportData() {
 
   for (const session of sessionRows) {
     const sampleOrder: number[] = JSON.parse(session.sampleOrder);
+
+    // Fetch pre/post self-efficacy responses once per session
+    const preRows = await getPrePostSurveyResponses(session.sessionId, 'pre');
+    const postRows = await getPrePostSurveyResponses(session.sessionId, 'post');
+    const preMap: Record<string, number> = {};
+    for (const r of preRows) preMap[r.questionId] = r.rating;
+    const postMap: Record<string, number> = {};
+    for (const r of postRows) postMap[r.questionId] = r.rating;
 
     for (let index = 0; index < sampleOrder.length; index++) {
       const sampleId = sampleOrder[index];
@@ -740,6 +812,7 @@ export async function getExportData() {
         .select({
           questionId: surveyResponses.questionId,
           rating: surveyResponses.rating,
+          numericValue: surveyResponses.numericValue,
         })
         .from(surveyResponses)
         .where(
@@ -750,7 +823,8 @@ export async function getExportData() {
         );
       const surveyMap: Record<string, number> = {};
       for (const s of surveyRows) {
-        surveyMap[s.questionId] = s.rating;
+        // For number_input questions, use numericValue; otherwise use rating
+        surveyMap[s.questionId] = s.numericValue ?? s.rating;
       }
 
       // Final submission
@@ -786,11 +860,33 @@ export async function getExportData() {
         time_seconds: timeSeconds,
         sample_started_at: timing?.startedAt ?? null,
         sample_completed_at: timing?.completedAt ?? null,
-        survey_authorship: surveyMap['authorship'] ?? null,
-        survey_satisfaction: surveyMap['satisfaction'] ?? null,
-        survey_cognitive_load: surveyMap['cognitive_load'] ?? null,
-        survey_helpfulness: surveyMap['helpfulness'] ?? null,
-        survey_future_intent: surveyMap['future_intent'] ?? null,
+        survey_calibration_prediction: surveyMap['calibration_prediction'] ?? null,
+        survey_ownership_personal: surveyMap['ownership_personal'] ?? null,
+        survey_ownership_responsibility: surveyMap['ownership_responsibility'] ?? null,
+        survey_ownership_connection: surveyMap['ownership_connection'] ?? null,
+        survey_ownership_emotional: surveyMap['ownership_emotional'] ?? null,
+        survey_ownership_mine: surveyMap['ownership_mine'] ?? null,
+        survey_ownership_contribution: surveyMap['ownership_contribution'] ?? null,
+        survey_ownership_proud: surveyMap['ownership_proud'] ?? null,
+        survey_tlx_mental_demand: surveyMap['tlx_mental_demand'] ?? null,
+        survey_tlx_effort: surveyMap['tlx_effort'] ?? null,
+        survey_tlx_frustration: surveyMap['tlx_frustration'] ?? null,
+        pre_se_ideas: preMap['se_ideas'] ?? null,
+        pre_se_organize: preMap['se_organize'] ?? null,
+        pre_se_express: preMap['se_express'] ?? null,
+        pre_se_grammar: preMap['se_grammar'] ?? null,
+        pre_se_structure: preMap['se_structure'] ?? null,
+        pre_se_revise: preMap['se_revise'] ?? null,
+        pre_se_focus: preMap['se_focus'] ?? null,
+        pre_se_identify_errors: preMap['se_identify_errors'] ?? null,
+        post_se_ideas: postMap['se_ideas'] ?? null,
+        post_se_organize: postMap['se_organize'] ?? null,
+        post_se_express: postMap['se_express'] ?? null,
+        post_se_grammar: postMap['se_grammar'] ?? null,
+        post_se_structure: postMap['se_structure'] ?? null,
+        post_se_revise: postMap['se_revise'] ?? null,
+        post_se_focus: postMap['se_focus'] ?? null,
+        post_se_identify_errors: postMap['se_identify_errors'] ?? null,
         final_content: finalSub?.finalContent ?? null,
         changes_summary: changesSummary,
         session_status: session.status,

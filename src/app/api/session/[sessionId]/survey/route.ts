@@ -3,9 +3,10 @@ import {
   getSession,
   saveSurveyResponses,
 } from '@/lib/db/queries';
-import { SURVEY_QUESTIONS } from '@/lib/survey';
+import { TASK_SURVEY_QUESTIONS } from '@/lib/survey';
 
-const VALID_QUESTION_IDS = new Set<string>(SURVEY_QUESTIONS.map((q) => q.id));
+const VALID_QUESTION_IDS = new Set<string>(TASK_SURVEY_QUESTIONS.map((q) => q.id));
+const QUESTION_MAP = new Map(TASK_SURVEY_QUESTIONS.map((q) => [q.id, q]));
 
 export async function POST(
   request: NextRequest,
@@ -30,7 +31,7 @@ export async function POST(
     const body = await request.json();
     const { sampleId, responses } = body as {
       sampleId?: number;
-      responses?: Array<{ questionId: string; rating: number }>;
+      responses?: Array<{ questionId: string; rating: number; numericValue?: number | null }>;
     };
 
     if (typeof sampleId !== 'number') {
@@ -40,9 +41,9 @@ export async function POST(
       );
     }
 
-    if (!Array.isArray(responses) || responses.length !== 5) {
+    if (!Array.isArray(responses) || responses.length !== TASK_SURVEY_QUESTIONS.length) {
       return NextResponse.json(
-        { error: 'responses must be an array of exactly 5 items' },
+        { error: `responses must be an array of exactly ${TASK_SURVEY_QUESTIONS.length} items` },
         { status: 400 },
       );
     }
@@ -54,16 +55,31 @@ export async function POST(
           { status: 400 },
         );
       }
-      if (
-        typeof r.rating !== 'number' ||
-        !Number.isInteger(r.rating) ||
-        r.rating < 1 ||
-        r.rating > 5
-      ) {
-        return NextResponse.json(
-          { error: `Rating must be an integer 1-5, got: ${r.rating}` },
-          { status: 400 },
-        );
+
+      const question = QUESTION_MAP.get(r.questionId)!;
+
+      if (question.type === 'number_input') {
+        // For number_input, rating stores 0 as sentinel, numericValue holds the actual value
+        if (r.numericValue === undefined || r.numericValue === null || typeof r.numericValue !== 'number') {
+          return NextResponse.json(
+            { error: `numericValue required for question: ${r.questionId}` },
+            { status: 400 },
+          );
+        }
+      } else {
+        // Likert scale validation
+        const maxScale = question.type === 'likert7' ? 7 : 5;
+        if (
+          typeof r.rating !== 'number' ||
+          !Number.isInteger(r.rating) ||
+          r.rating < 1 ||
+          r.rating > maxScale
+        ) {
+          return NextResponse.json(
+            { error: `Rating must be an integer 1-${maxScale} for ${r.questionId}, got: ${r.rating}` },
+            { status: 400 },
+          );
+        }
       }
     }
 

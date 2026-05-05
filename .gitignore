@@ -45,20 +45,16 @@ next-env.d.ts
 *.db-journal
 *.db-wal
 
-# ── GSD baseline (auto-generated) ──
-.gsd/activity/
-.gsd/forensics/
-.gsd/runtime/
-.gsd/worktrees/
-.gsd/parallel/
-.gsd/auto.lock
-.gsd/metrics.json
-.gsd/completed-units.json
-.gsd/STATE.md
-.gsd/gsd.db
-.gsd/DISCUSSION-MANIFEST.json
-.gsd/milestones/**/*-CONTINUE.md
-.gsd/milestones/**/continue.md
+# ── GSD / planning (auto-generated, not code) ──
+.gsd/
+.planning/
+.mcp.json
+
+# ── Study documents / exports (not code) ──
+Dr_Rho_Meeting_Research_Directions.md
+Milestone*.pdf
+Weekly Report Group*.txt
+study-export*.csv
 Thumbs.db
 *.swp
 *.swo

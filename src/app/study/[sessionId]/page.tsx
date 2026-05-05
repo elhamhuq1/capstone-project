@@ -8,15 +8,16 @@ import WritingEditor from '@/components/WritingEditor';
 import ChatPanel from '@/components/ChatPanel';
 import ScaffoldPanel from '@/components/ScaffoldPanel';
 import SurveyForm from '@/components/SurveyForm';
+import PrePostSurveyForm from '@/components/PrePostSurveyForm';
 import CompletionScreen from '@/components/CompletionScreen';
 
 // ── Submit button lives in the top bar but needs editor state via callback ──
 function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, onSubmitForSurvey, getCurrentText }: {
   sessionId: string;
-  sample: { id: number; content: string };
+  sample: { id: number; content: string; grammarlyScore: number | null };
   sampleIndex: number;
   totalSamples: number;
-  onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number }) => void;
+  onSubmitForSurvey: (data: { sampleId: number; sampleIndex: number; grammarlyScore: number | null }) => void;
   getCurrentText: () => string;
 }) {
   const [advancing, setAdvancing] = useState(false);
@@ -42,7 +43,7 @@ function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, on
         body: JSON.stringify({ sampleId: sample.id, sampleIndex: sampleIndex - 1, event: 'complete' }),
       }).catch(() => {});
 
-      onSubmitForSurvey({ sampleId: sample.id, sampleIndex });
+      onSubmitForSurvey({ sampleId: sample.id, sampleIndex, grammarlyScore: sample.grammarlyScore });
     } catch { setAdvancing(false); }
   }
 
@@ -69,12 +70,13 @@ function SubmitRevisionButton({ sessionId, sample, sampleIndex, totalSamples, on
   );
 }
 
-type Phase = 'loading' | 'instructions' | 'editing' | 'survey' | 'completed' | 'error';
+type Phase = 'loading' | 'instructions' | 'pre-survey' | 'editing' | 'survey' | 'post-survey' | 'completed' | 'error';
 
 interface CurrentSample {
   id: number;
   title: string;
   content: string;
+  grammarlyScore: number | null;
 }
 
 interface Revision {
@@ -97,6 +99,8 @@ interface SessionData {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
   sampleSubmitted: boolean;
   surveyCompleted: boolean;
+  preSurveyCompleted: boolean;
+  postSurveyCompleted: boolean;
 }
 
 // ── Mobile tab switcher component ──
@@ -157,7 +161,7 @@ export default function StudyPage() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [pendingSurvey, setPendingSurvey] = useState<{ sampleId: number; sampleIndex: number } | null>(null);
+  const [pendingSurvey, setPendingSurvey] = useState<{ sampleId: number; sampleIndex: number; grammarlyScore: number | null } | null>(null);
   const [mobileTab, setMobileTab] = useState<'editor' | 'chat'>('editor');
 
   const fetchSession = useCallback(async () => {
@@ -179,18 +183,30 @@ export default function StudyPage() {
 
       switch (data.status) {
         case 'instructions':
-          setPhase('instructions');
+          // After instructions, check if pre-survey is done
+          if (!data.preSurveyCompleted) {
+            setPhase('instructions');
+          } else {
+            setPhase('instructions');
+          }
+          break;
+        case 'pre-survey':
+          setPhase('pre-survey');
           break;
         case 'in-progress':
           if (data.sampleSubmitted && !data.surveyCompleted && data.currentSample) {
             setPendingSurvey({
               sampleId: data.currentSample.id,
               sampleIndex: data.currentSampleIndex + 1,
+              grammarlyScore: data.currentSample.grammarlyScore ?? null,
             });
             setPhase('survey');
           } else {
             setPhase('editing');
           }
+          break;
+        case 'post-survey':
+          setPhase('post-survey');
           break;
         case 'completed':
           setPhase('completed');
@@ -210,6 +226,7 @@ export default function StudyPage() {
 
   async function handleBegin() {
     try {
+      // Transition to pre-survey phase
       const res = await fetch(`/api/session/${sessionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -222,7 +239,8 @@ export default function StudyPage() {
         return;
       }
 
-      await fetchSession();
+      // Show pre-survey instead of going to editing
+      setPhase('pre-survey');
     } catch {
       setErrorMessage('Network error — please try again');
     }
@@ -242,7 +260,7 @@ export default function StudyPage() {
     }
   }, [phase, sessionData?.currentSample?.id, sessionData?.currentSampleIndex, sessionId]);
 
-  function handleSubmitForSurvey(data: { sampleId: number; sampleIndex: number }) {
+  function handleSubmitForSurvey(data: { sampleId: number; sampleIndex: number; grammarlyScore: number | null }) {
     setPendingSurvey(data);
     setPhase('survey');
   }
@@ -309,6 +327,19 @@ export default function StudyPage() {
     return <InstructionsScreen group={sessionData.group} onBegin={handleBegin} />;
   }
 
+  // ─── Pre-Survey (Writing Self-Efficacy) ─────────────────────
+  if (phase === 'pre-survey' && sessionData) {
+    return (
+      <PrePostSurveyForm
+        sessionId={sessionId}
+        phase="pre"
+        onComplete={async () => {
+          await fetchSession();
+        }}
+      />
+    );
+  }
+
   // ─── Editing ──────────────────────────────────────────────
   if (phase === 'editing' && sessionData && sessionData.currentSample) {
     const sampleIndex = sessionData.currentSampleIndex + 1;
@@ -333,7 +364,7 @@ export default function StudyPage() {
           gap: '12px',
           flexWrap: 'wrap',
         }}>
-          {/* Left: sample counter + group badge */}
+          {/* Left: sample counter + group badge + grammarly score */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <span className="sample-counter" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '18px', fontWeight: 800, color: '#F4F2ED', letterSpacing: '-0.02em', whiteSpace: 'nowrap' as const }}>
               Sample {sampleIndex}/{totalSamples}
@@ -341,6 +372,23 @@ export default function StudyPage() {
             <span className="group-badge" style={{ fontFamily: 'var(--font-inter), sans-serif', fontSize: '13px', color: '#F4F2ED', backgroundColor: '#2A2824', borderRadius: '6px', padding: '5px 12px', whiteSpace: 'nowrap' as const }}>
               {GROUP_LABEL[group] ?? group}
             </span>
+            {sessionData.currentSample.grammarlyScore != null && (
+              <span className="grammarly-badge" style={{
+                fontFamily: 'var(--font-ibm-plex-mono), monospace',
+                fontSize: '13px',
+                color: '#D4C17A',
+                backgroundColor: '#2A2824',
+                borderRadius: '6px',
+                padding: '5px 12px',
+                whiteSpace: 'nowrap' as const,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}>
+                <span style={{ fontSize: '11px', opacity: 0.7, textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>Grammarly</span>
+                <span style={{ fontWeight: 700, fontSize: '15px' }}>{sessionData.currentSample.grammarlyScore}</span>
+              </span>
+            )}
           </div>
 
           {/* Center: progress dots */}
@@ -452,9 +500,23 @@ export default function StudyPage() {
           sampleId={pendingSurvey.sampleId}
           sampleIndex={pendingSurvey.sampleIndex}
           totalSamples={sessionData.totalSamples}
+          grammarlyScore={pendingSurvey.grammarlyScore}
           onSurveyComplete={handleSurveyComplete}
         />
       </div>
+    );
+  }
+
+  // ─── Post-Survey (Writing Self-Efficacy) ─────────────────────
+  if (phase === 'post-survey' && sessionData) {
+    return (
+      <PrePostSurveyForm
+        sessionId={sessionId}
+        phase="post"
+        onComplete={async () => {
+          await fetchSession();
+        }}
+      />
     );
   }
 
